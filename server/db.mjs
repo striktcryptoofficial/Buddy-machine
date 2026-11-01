@@ -14,7 +14,13 @@ export function lifeMode() {
 export async function openDb() {
   const url = process.env.DATABASE_URL
   if (!url) return null
-  const next = new Pool({ connectionString: url, max: 8, connectionTimeoutMillis: 2000 })
+  const tls = /[?&]sslmode=(require|verify-ca|verify-full)|[?&]ssl=true/.test(url)
+  const next = new Pool({
+    connectionString: url,
+    max: 8,
+    connectionTimeoutMillis: 10000,
+    ssl: tls ? { rejectUnauthorized: false } : undefined,
+  })
   try {
     const schema = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'schema.sql'), 'utf8')
     await next.query(schema)

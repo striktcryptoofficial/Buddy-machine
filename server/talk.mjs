@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { createReadStream, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs'
+import { dirname, extname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { handleGallery, handleHatchRequest, handleLifeRequest, handleStream, archStatus } from './life.mjs'
 import { openBus } from './bus.mjs'
@@ -10,7 +10,26 @@ import { loadEnv } from './env.mjs'
 const serverDir = dirname(fileURLToPath(import.meta.url))
 loadEnv()
 
-const port = Number(process.env.TALK_PORT || 8787)
+const port = Number(process.env.PORT || process.env.TALK_PORT || 8787)
+const host = process.env.HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1')
+const distDir = resolve(serverDir, '..', 'dist')
+const fileTypes = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.txt': 'text/plain; charset=utf-8',
+  '.webmanifest': 'application/manifest+json',
+}
 const catModel = process.env.ANTHROPIC_CAT_MODEL || 'claude-haiku-5-5'
 const lilyModel = process.env.ANTHROPIC_LILY_MODEL || 'claude-sonnet-5-5'
 const CAT_CAP = 40
@@ -667,6 +686,27 @@ function send(res, status, body) {
   res.end(raw)
 }
 
+function serveApp(req, res) {
+  const index = join(distDir, 'index.html')
+  if (!existsSync(index)) return false
+  if (req.method !== 'GET' && req.method !== 'HEAD') return false
+  const rel = decodeURIComponent(pathOnly(req.url)).replace(/^\/+/, '')
+  const file = rel ? resolve(distDir, rel) : index
+  const inside = file === distDir || file.startsWith(distDir + sep)
+  const hit = inside && existsSync(file) && statSync(file).isFile() ? file : index
+  const type = fileTypes[extname(hit).toLowerCase()] || 'application/octet-stream'
+  res.writeHead(200, {
+    'Content-Type': type,
+    'Cache-Control': hit.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600',
+  })
+  if (req.method === 'HEAD') {
+    res.end()
+    return true
+  }
+  createReadStream(hit).pipe(res)
+  return true
+}
+
 function pathOnly(url) {
   return (url || '/').split('?')[0]
 }
@@ -717,6 +757,7 @@ const server = createServer(async (req, res) => {
     return
   }
   if (req.method !== 'POST' || route !== '/api/talk') {
+    if (serveApp(req, res)) return
     send(res, 404, { ok: false })
     return
   }
@@ -763,10 +804,10 @@ const server = createServer(async (req, res) => {
 await openBus()
 await openLife()
 
-server.listen(port, '127.0.0.1', () => {
+server.listen(port, host, () => {
   const ready = Boolean(process.env.ANTHROPIC_API_KEY)
   const arch = archStatus()
   console.log(
-    `talk server on http://127.0.0.1:${port} ${ready ? 'with a key' : 'script fallback, no key yet'} life=${arch.life} bus=${arch.bus}`,
+    `talk server on http://${host}:${port} ${ready ? 'with a key' : 'script fallback, no key yet'} life=${arch.life} bus=${arch.bus}`,
   )
 })

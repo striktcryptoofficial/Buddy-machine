@@ -17,7 +17,12 @@ export async function openBus() {
   const url = process.env.REDIS_URL
   if (!url) return false
   try {
-    const options = { connectTimeout: 2000, maxRetriesPerRequest: 1, retryStrategy: () => null }
+    const options = {
+      connectTimeout: 10000,
+      maxRetriesPerRequest: 1,
+      retryStrategy: () => null,
+      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+    }
     pub = new Redis(url, options)
     sub = new Redis(url, options)
     pub.on('error', () => {})
