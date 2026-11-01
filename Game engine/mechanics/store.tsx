@@ -38,7 +38,24 @@ import { seasonReport } from './season'
 import type { CharmId } from './house'
 
 const KEY = 'buddy-ai-v4'
-export const WALLET = 'dev'
+const WHO_KEY = 'buddy-who'
+
+function ownWallet(): string {
+  if (typeof window === 'undefined') return 'dev'
+  const host = window.location.hostname
+  if (host === 'localhost' || host === '127.0.0.1') return 'dev'
+  try {
+    const kept = localStorage.getItem(WHO_KEY)
+    if (kept && /^h_[a-z0-9]{16}$/.test(kept)) return kept
+    const next = `h_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
+    localStorage.setItem(WHO_KEY, next)
+    return next
+  } catch {
+    return `h_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
+  }
+}
+
+export const WALLET = ownWallet()
 
 let lifePushInFlight = false
 let lifeRevision = 0
