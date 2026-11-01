@@ -1,0 +1,340 @@
+@import "./tokens.css";
+
+@property --challenge-rim {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes challenge-rim-spin {
+  to {
+    --challenge-rim: 360deg;
+  }
+}
+
+@keyframes challenge-sheen {
+  0%, 58% {
+    transform: translateX(-160%);
+  }
+  82%, 100% {
+    transform: translateX(320%);
+  }
+}
+
+@keyframes challenge-open-pulse {
+  0%, 100% { opacity: 1; }
+  55% { opacity: 0.45; }
+}
+
+.challenge-board .challenge-card .card-face {
+  color: #1c1e22;
+}
+
+.challenge-board .challenge-card .card-face > * {
+  position: relative;
+  z-index: 1;
+}
+
+.challenge-board .challenge-card > .card-shade {
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.challenge-board .challenge-kicker,
+.challenge-board .challenge-status,
+.challenge-board .challenge-title,
+.challenge-board .challenge-detail,
+.challenge-board .challenge-rows,
+.challenge-board .challenge-prize,
+.challenge-board .challenge-prize strong,
+.challenge-board .challenge-prize span,
+.challenge-board .challenge-promo h2,
+.challenge-board .challenge-promo__lead,
+.challenge-board .challenge-promo__facts,
+.challenge-board .challenge-promo__facts strong,
+.challenge-board .challenge-promo__facts small {
+  font-family: var(--ui-font);
+}
+
+.challenge-board .challenge-kicker {
+  color: var(--ui-soul);
+}
+
+.challenge-board .challenge-kicker::before {
+  border-radius: 1px;
+  background: var(--ui-soul);
+  box-shadow: none;
+}
+
+.challenge-board .challenge-kicker[data-kicker="Featured"],
+.challenge-board .challenge-kicker[data-kicker="Throne"] {
+  color: var(--ui-legend);
+}
+
+.challenge-board .challenge-kicker[data-kicker="Featured"]::before,
+.challenge-board .challenge-kicker[data-kicker="Throne"]::before {
+  background: var(--ui-legend);
+  box-shadow: none;
+}
+
+.challenge-board .challenge-kicker[data-kicker="Lab"] {
+  color: var(--ui-rare);
+}
+
+.challenge-board .challenge-kicker[data-kicker="Lab"]::before {
+  background: var(--ui-rare);
+  box-shadow: none;
+}
+
+.challenge-board .challenge-kicker[data-kicker="Seat"],
+.challenge-board .challenge-kicker[data-kicker="Beside"] {
+  color: rgba(28, 30, 34, 0.55);
+}
+
+.challenge-board .challenge-kicker[data-kicker="Seat"]::before,
+.challenge-board .challenge-kicker[data-kicker="Beside"]::before {
+  background: rgba(28, 30, 34, 0.35);
+  box-shadow: none;
+}
+
+.challenge-board .challenge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-soul);
+  background: color-mix(in srgb, var(--ui-soul) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-soul) 38%, transparent);
+}
+
+.challenge-board .challenge-status[data-status="Open"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ui-soul);
+  box-shadow: none;
+  animation: challenge-open-pulse 1.7s ease-in-out infinite;
+}
+
+.challenge-board .challenge-status[data-status="Waiting"] {
+  color: rgba(28, 30, 34, 0.45);
+  background: rgba(28, 30, 34, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(28, 30, 34, 0.12);
+}
+
+.challenge-board .challenge-status[data-status="Rules"] {
+  padding: 0;
+  color: rgba(28, 30, 34, 0.45);
+  background: none;
+  box-shadow: none;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.challenge-board .challenge-status[data-status="Aggressive"] {
+  color: var(--ui-heat);
+  background: color-mix(in srgb, var(--ui-heat) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-heat) 48%, transparent);
+}
+
+.challenge-board .challenge-status[data-status="Tactical"],
+.challenge-board .challenge-status[data-status="Arena"] {
+  color: var(--ui-rare);
+  background: color-mix(in srgb, var(--ui-rare) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-rare) 46%, transparent);
+}
+
+.challenge-board .challenge-status[data-status="Occupied"] {
+  color: var(--ui-legend);
+  background: color-mix(in srgb, var(--ui-legend) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-legend) 50%, transparent);
+}
+
+.challenge-board .challenge-title,
+.challenge-board .challenge-card.is-gate .challenge-title,
+.challenge-board .challenge-promo h2 {
+  color: #1c1e22;
+}
+
+.challenge-board .challenge-detail,
+.challenge-board .challenge-promo__lead {
+  color: rgba(28, 30, 34, 0.62);
+}
+
+.challenge-board .challenge-prize {
+  background: color-mix(in srgb, var(--ui-soul) 16%, white);
+  box-shadow: none;
+  color: #1c1e22;
+}
+
+.challenge-board .challenge-prize strong {
+  font-size: 22px;
+  color: #1c1e22;
+  text-shadow: none;
+}
+
+.challenge-board .challenge-prize span {
+  color: var(--ui-soul);
+}
+
+.challenge-board .challenge-card:has([data-kicker="Throne"]) .challenge-prize {
+  background: color-mix(in srgb, var(--ui-legend) 22%, white);
+  box-shadow: inset 0 0 0 1px rgba(28, 30, 34, 0.16);
+}
+
+.challenge-board .challenge-card:has([data-kicker="Throne"]) .challenge-prize strong {
+  color: #1c1e22;
+  text-shadow: none;
+}
+
+.challenge-board .challenge-card:has([data-kicker="Throne"]) .challenge-prize span {
+  color: var(--ui-legend);
+}
+
+.challenge-board .challenge-rows {
+  gap: 6px;
+}
+
+.challenge-board .challenge-rows div {
+  background: rgba(28, 30, 34, 0.04);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-soul) 28%, transparent);
+}
+
+.challenge-board .challenge-rows dt {
+  color: rgba(28, 30, 34, 0.5);
+}
+
+.challenge-board .challenge-rows dd {
+  color: #1c1e22;
+}
+
+.challenge-board .challenge-card .card-face.is-featured {
+  overflow: hidden;
+}
+
+.challenge-board .challenge-card .card-face.is-featured::before {
+  content: none;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  box-sizing: border-box;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--challenge-rim),
+    color-mix(in srgb, var(--ui-legend) 32%, transparent) 0deg,
+    var(--ui-legend) 48deg,
+    color-mix(in srgb, var(--ui-legend) 42%, var(--ui-ink)) 96deg,
+    var(--ui-legend) 148deg,
+    color-mix(in srgb, var(--ui-legend) 40%, transparent) 214deg,
+    color-mix(in srgb, var(--ui-legend) 18%, transparent) 300deg,
+    color-mix(in srgb, var(--ui-legend) 32%, transparent) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: challenge-rim-spin 10s linear infinite;
+  pointer-events: none;
+}
+
+.challenge-board .challenge-card .card-face.is-featured::after {
+  content: none;
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  left: 0;
+  z-index: 2;
+  width: 38%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    color-mix(in srgb, var(--ui-ink) 8%, transparent) 38%,
+    color-mix(in srgb, var(--ui-ink) 42%, transparent) 50%,
+    color-mix(in srgb, var(--ui-legend) 28%, transparent) 62%,
+    transparent 100%
+  );
+  transform: translateX(-160%);
+  animation: challenge-sheen 6.8s ease-in-out infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.challenge-board .challenge-card:has(.is-featured) > .card-shade {
+  box-shadow: none;
+}
+
+.challenge-board .challenge-card .card-face.is-featured .challenge-prize {
+  background: color-mix(in srgb, var(--ui-legend) 24%, white);
+  box-shadow: none;
+}
+
+.challenge-board .challenge-card .card-face.is-featured .challenge-prize strong {
+  color: #1c1e22;
+  text-shadow: none;
+}
+
+.challenge-board .challenge-card .card-face.is-featured .challenge-prize span {
+  color: var(--ui-legend);
+}
+
+.challenge-board .challenge-promo .challenge-kicker::after {
+  background: color-mix(in srgb, var(--ui-soul) 40%, transparent);
+}
+
+.challenge-board .challenge-promo__facts span {
+  background: rgba(28, 30, 34, 0.04);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-soul) 22%, transparent);
+  color: rgba(28, 30, 34, 0.5);
+}
+
+.challenge-board .challenge-promo__facts strong {
+  color: #1c1e22;
+  text-shadow: none;
+}
+
+.challenge-board .challenge-promo__facts small {
+  color: rgba(28, 30, 34, 0.55);
+}
+
+.challenge-board .challenge-promo__facts span:first-child {
+  background: color-mix(in srgb, var(--ui-soul) 16%, white);
+  box-shadow: inset 0 0 0 1px rgba(28, 30, 34, 0.12);
+  color: var(--ui-soul);
+}
+
+.challenge-board .challenge-promo__facts span:first-child strong {
+  color: #1c1e22;
+  text-shadow: none;
+}
+
+.challenge-board .challenge-prize strong,
+.challenge-board .challenge-card:has([data-kicker="Throne"]) .challenge-prize strong,
+.challenge-board .challenge-promo__facts span:first-child strong {
+  text-shadow: none;
+}
+
+.challenge-board .challenge-status,
+.challenge-board .challenge-rows div,
+.challenge-board .challenge-card:has([data-kicker="Throne"]) .challenge-prize,
+.challenge-board .challenge-promo__facts span,
+.challenge-board .challenge-promo__facts span:first-child {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenge-board .challenge-card .card-face.is-featured::before,
+  .challenge-board .challenge-status[data-status="Open"]::before {
+    animation: none;
+  }
+
+  .challenge-board .challenge-card .card-face.is-featured::after {
+    animation: none;
+    transform: translateX(-160%);
+  }
+}

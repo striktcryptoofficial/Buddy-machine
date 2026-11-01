@@ -1,0 +1,52 @@
+@import "./tokens.css";
+
+.mission-card .card-face,
+.stats-row .card-face,
+.ability-card .card-face {
+  box-shadow: none;
+}
+
+.mission-card .card-face svg,
+.stats-row .card-face svg,
+.ability-card .card-face svg {
+  color: var(--ui-soul);
+}
+
+.mission-card .mission-code,
+.stats-row .stats-name,
+.ability-card .ability-code {
+  color: var(--ui-soul);
+}
+
+.mission-card .mission-meta,
+.ability-card .ability-line,
+.ability-card .ability-state {
+  color: rgba(28, 30, 34, 0.55);
+}
+
+.stats-row .stats-dots i {
+  background: rgba(28, 30, 34, 0.16);
+  box-shadow: none;
+}
+
+.stats-row .stats-dots i.is-on {
+  background: var(--ui-soul);
+  box-shadow: none;
+}
+
+.ability-card .ability-state.is-ready {
+  color: var(--ui-soul);
+  text-shadow: none;
+  animation: edge-ready-pulse 3.4s ease-in-out infinite;
+}
+
+@keyframes edge-ready-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.68; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-card .ability-state.is-ready {
+    animation: none;
+  }
+}

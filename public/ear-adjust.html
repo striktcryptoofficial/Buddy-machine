@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lily ears</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      align-items: flex-start;
+      padding: 28px;
+      background: #12141a;
+      color: #efe7dc;
+      font-family: "Segoe UI", sans-serif;
+    }
+    h1 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
+    p { margin: 0 0 18px; color: #b7ad9e; font-size: 14px; }
+    label {
+      display: grid;
+      grid-template-columns: 110px 1fr 42px;
+      gap: 10px;
+      align-items: center;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+    input[type="range"] { width: 220px; }
+    output { text-align: right; font-variant-numeric: tabular-nums; }
+    canvas {
+      background: #000;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      width: min(70vh, 520px);
+      height: min(70vh, 520px);
+    }
+    .stage { display: flex; flex-direction: column; gap: 8px; }
+    .stage span { color: #b7ad9e; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="view" width="128" height="128"></canvas>
+    <span>One idle frame. The game sprite is not changed.</span>
+  </div>
+  <form>
+    <h1>Lily ears</h1>
+    <p>Positive lean points the tips inward. Negative points them out.</p>
+    <label>Lean <input id="lean" type="range" min="-60" max="60" value="-45" /> <output id="leanOut">-45</output></label>
+    <label>How low <input id="low" type="range" min="0" max="24" value="9" /> <output id="lowOut">9</output></label>
+    <label>Apart <input id="apart" type="range" min="8" max="28" value="14" /> <output id="apartOut">14</output></label>
+    <label>Long <input id="long" type="range" min="8" max="22" value="13" /> <output id="longOut">13</output></label>
+    <label>Wide <input id="wide" type="range" min="4" max="16" value="11" /> <output id="wideOut">11</output></label>
+  </form>
+  <script>
+    const frame = new Image()
+    frame.src = '/Game%20engine/assets/lily/Idle/Uncrossed-Arms/idle-evil-smirk_frames/frame_04.png'
+    const view = document.getElementById('view')
+    const ctx = view.getContext('2d', { willReadFrequently: true })
+    const ids = ['lean', 'low', 'apart', 'long', 'wide']
+    const OUT = [18, 13, 43, 255]
+    const FUR = [78, 75, 128, 255]
+    const PINK = [236, 168, 186, 255]
+
+    function read() {
+      const value = {}
+      for (const id of ids) {
+        const input = document.getElementById(id)
+        value[id] = Number(input.value)
+        document.getElementById(id + 'Out').textContent = input.value
+      }
+      return value
+    }
+
+    function fillTri(data, ax, ay, bx, by, cx, cy, color) {
+      const minX = Math.max(0, Math.floor(Math.min(ax, bx, cx)))
+      const maxX = Math.min(127, Math.ceil(Math.max(ax, bx, cx)))
+      const minY = Math.max(0, Math.floor(Math.min(ay, by, cy)))
+      const maxY = Math.min(127, Math.ceil(Math.max(ay, by, cy)))
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const px = x + 0.5
+          const py = y + 0.5
+          const w0 = (bx - px) * (cy - py) - (cx - px) * (by - py)
+          const w1 = (cx - px) * (ay - py) - (ax - px) * (cy - py)
+          const w2 = (ax - px) * (by - py) - (bx - px) * (ay - py)
+          const inside = (w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0)
+          if (!inside) continue
+          const i = (y * 128 + x) * 4
+          data[i] = color[0]
+          data[i + 1] = color[1]
+          data[i + 2] = color[2]
+          data[i + 3] = 255
+        }
+      }
+    }
+
+    function ear(data, baseX, side, lean, low, length, wide) {
+      const rad = (lean * Math.PI) / 180
+      const tipX = baseX + -side * Math.sin(rad) * length
+      const tipY = low - Math.cos(rad) * length
+      const dx = tipX - baseX
+      const dy = tipY - low
+      const len = Math.hypot(dx, dy) || 1
+      const px = -dy / len
+      const py = dx / len
+      const half = wide / 2
+      const left = [baseX + px * half, low + py * half]
+      const right = [baseX - px * half, low - py * half]
+      const outline = wide / 2 + 1.4
+      fillTri(data, tipX, tipY, baseX + px * outline, low + py * outline, baseX - px * outline, low - py * outline, OUT)
+      fillTri(data, tipX, tipY, left[0], left[1], right[0], right[1], FUR)
+      const innerTipX = tipX + (baseX - tipX) * 0.42
+      const innerTipY = tipY + (low - tipY) * 0.42
+      fillTri(
+        data,
+        innerTipX,
+        innerTipY,
+        baseX + px * (half * 0.45),
+        low + py * (half * 0.45),
+        baseX - px * (half * 0.45),
+        low - py * (half * 0.45),
+        PINK,
+      )
+    }
+
+    function paint() {
+      if (!frame.complete || !frame.naturalWidth) return
+      const v = read()
+      ctx.imageSmoothingEnabled = false
+      ctx.clearRect(0, 0, 128, 128)
+      ctx.drawImage(frame, 0, 0)
+      const data = ctx.getImageData(0, 0, 128, 128)
+      const baseY = 8 + v.low
+      ear(data.data, 64 - v.apart, -1, v.lean, baseY, v.long, v.wide)
+      ear(data.data, 64 + v.apart, 1, v.lean, baseY, v.long, v.wide)
+      ctx.putImageData(data, 0, 0)
+    }
+
+    for (const id of ids) document.getElementById(id).addEventListener('input', paint)
+    frame.onload = paint
+    frame.onerror = () => {
+      document.querySelector('p').textContent = 'The frame did not load.'
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+/* Shared gaming-UI tokens. Cards import this. Do not restyle the machine glass here. */
+:root {
+  --ui-void: rgba(7, 10, 16, 0.82);
+  --ui-panel: rgba(14, 20, 28, 0.9);
+  --ui-ink: #e8f6f3;
+  --ui-mute: rgba(232, 246, 243, 0.62);
+  --ui-faint: rgba(232, 246, 243, 0.38);
+  --ui-line: rgba(28, 30, 34, 0.18);
+  --ui-soul: #1c1e22;
+  --ui-soul-dim: rgba(28, 30, 34, 0.08);
+  --ui-rare: #5c636b;
+  --ui-legend: #1c1e22;
+  --ui-heat: #3a3f46;
+  --ui-font: "Segoe UI", system-ui, sans-serif;
+}

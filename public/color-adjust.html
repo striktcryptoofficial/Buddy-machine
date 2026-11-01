@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lily colors</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      align-items: flex-start;
+      padding: 28px;
+      background: #12141a;
+      color: #efe7dc;
+      font-family: "Segoe UI", sans-serif;
+    }
+    h1 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
+    p { margin: 0 0 14px; max-width: 460px; color: #b7ad9e; font-size: 14px; }
+    canvas {
+      background: #000;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+    .card {
+      width: min(72vh, 560px);
+      height: min(72vh, 560px);
+      overflow: auto;
+      background: #000;
+    }
+    #view {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+    #loupe { width: 160px; height: 160px; display: none; }
+    .stage { display: flex; flex-direction: column; gap: 8px; }
+    .note { color: #b7ad9e; font-size: 13px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+    button, select, input[type="text"] {
+      background: #1c1e22;
+      color: #efe7dc;
+      border: 1px solid #3a3d44;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font: inherit;
+    }
+    button, select { cursor: pointer; }
+    input[type="text"] { width: 140px; }
+    button.on { background: #efe7dc; color: #12141a; }
+    .panel { width: min(480px, 100%); }
+    .group {
+      display: grid;
+      grid-template-columns: 92px 36px 64px 36px 1fr 36px 28px;
+      gap: 8px;
+      align-items: center;
+      margin: 6px 0;
+      font-size: 13px;
+    }
+    .group.on { outline: 1px solid #efe7dc; border-radius: 6px; padding: 4px; }
+    input[type="color"] { width: 36px; height: 26px; padding: 0; border: 0; background: transparent; }
+    input[type="range"] { width: 100%; }
+    .heads, .group span { color: #b7ad9e; }
+    .heads {
+      display: grid;
+      grid-template-columns: 92px 36px 64px 36px 1fr 36px 28px;
+      gap: 8px;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    select { width: 180px; }
+    #edits { min-height: 18px; }
+    output { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="card" id="card">
+      <canvas id="view" width="128" height="128"></canvas>
+    </div>
+    <div class="row">
+      <button type="button" id="frame-prev">Prev</button>
+      <select id="frame"></select>
+      <button type="button" id="frame-next">Next</button>
+    </div>
+    <span class="note" id="frame-label">Folded arms.</span>
+    <canvas id="loupe" width="16" height="16"></canvas>
+  </div>
+  <div class="panel">
+    <h1>Lily colors</h1>
+    <p>Each group has its own color and its own shadow, so a dark pixel does not have to be the same mix every time. Paint fixes one pixel. Color moves every pixel of that exact original color. Edits save on their own.</p>
+    <div class="row">
+      <button type="button" id="tool-paint" class="on">Paint</button>
+      <button type="button" id="tool-color">Color</button>
+      <button type="button" id="tool-sample">Pick</button>
+      <button type="button" id="tool-erase">Erase</button>
+      <button type="button" id="brush-1" class="on">1 px</button>
+      <button type="button" id="brush-3">3 px</button>
+      <button type="button" id="brush-5">5 px</button>
+    </div>
+    <div class="row">
+      <button type="button" id="show-parts">Show parts</button>
+      <button type="button" id="show-edits">Show edits</button>
+      <button type="button" id="undo">Undo</button>
+      <input id="group-name" type="text" placeholder="Group name" />
+      <button type="button" id="add">Add group</button>
+      <button type="button" id="reset">Reset</button>
+    </div>
+    <div class="heads"><span>Group</span><span></span><span>Shadow</span><span></span><span>Shade</span><span></span><span></span></div>
+    <div id="groups"></div>
+    <p id="status" class="note">Loading edits.</p>
+    <p id="hit" class="note">Click a pixel.</p>
+    <p id="edits" class="note">No pixel changes yet.</p>
+  </div>
+  <script>
+    const SIZE = 128
+    const FRAMES = []
+    for (let clip = 1; clip <= 7; clip++) {
+      for (let step = 1; step <= 4; step++) {
+        FRAMES.push({
+          id: 'crossed-' + clip + '-' + step,
+          label: 'Folded ' + clip + ' · ' + step,
+          src: '/lily-src/Idle/Crossed-Arms/idle-' + clip + '_frames/frame_0' + step + '.png',
+        })
+      }
+    }
+    let frameId = 'crossed-1-1'
+    const card = document.getElementById('card')
+    const view = document.getElementById('view')
+    let zoom = 1
+    const loupe = document.getElementById('loupe')
+    const ctx = view.getContext('2d', { willReadFrequently: true })
+    const loupeCtx = loupe.getContext('2d')
+    const DEBUG = {
+      hair: [186, 196, 214], jacket: [214, 122, 64], shirt: [244, 244, 244],
+      bow: [196, 64, 96], gold: [232, 196, 96], eyes: [120, 196, 232],
+      skin: [232, 176, 168], line: [12, 12, 12], keep: [120, 220, 120],
+    }
+    const MAP = {
+      '78,75,128': 'hair', '46,39,74': 'hair', '18,13,43': 'hair', '37,31,64': 'hair',
+      '21,16,49': 'hair', '52,43,95': 'hair', '62,54,108': 'hair', '92,82,143': 'hair',
+      '77,71,95': 'jacket', '80,73,97': 'jacket',
+      '253,252,252': 'shirt',
+      '253,232,211': 'skin', '221,166,164': 'skin', '209,144,143': 'skin', '212,151,151': 'skin',
+      '229,178,174': 'skin', '237,189,182': 'skin', '251,222,195': 'skin', '200,122,123': 'skin',
+      '190,112,114': 'skin',
+      '68,2,39': 'bow', '185,65,94': 'bow', '113,39,68': 'bow', '177,98,101': 'bow',
+      '191,68,98': 'bow', '103,32,63': 'bow', '182,108,109': 'bow', '131,53,59': 'bow',
+      '163,82,88': 'bow', '147,66,70': 'bow', '123,49,75': 'bow', '78,3,44': 'bow',
+      '46,0,18': 'bow', '45,0,18': 'bow',
+      '248,215,135': 'gold', '174,132,56': 'gold', '251,228,164': 'gold', '134,107,55': 'gold',
+      '254,228,162': 'gold', '167,133,89': 'gold', '177,142,89': 'gold', '175,138,89': 'gold',
+      '231,208,244': 'eyes', '217,175,244': 'eyes', '164,137,206': 'eyes', '208,162,240': 'eyes',
+      '137,105,181': 'eyes', '179,157,218': 'eyes', '223,198,237': 'eyes', '172,147,214': 'eyes',
+      '149,123,200': 'eyes', '204,156,240': 'eyes', '214,164,201': 'eyes', '178,128,177': 'eyes',
+      '0,0,0': 'line',
+    }
+
+    function baseGroups() {
+      return [
+        { id: 'hair', name: 'Hair', color: '#4e4b80', shadowOn: false, shadow: '#1a1630', shade: 100, hold: true, edited: false },
+        { id: 'jacket', name: 'Jacket', color: '#4d475f', shadowOn: false, shadow: '#221e2a', shade: 100, hold: true, edited: false },
+        { id: 'shirt', name: 'Shirt', color: '#fdfcfc', shadowOn: false, shadow: '#c8c6c6', shade: 100, hold: true, edited: false },
+        { id: 'bow', name: 'Bow', color: '#b9415e', shadowOn: false, shadow: '#4a1024', shade: 100, hold: true, edited: false },
+        { id: 'gold', name: 'Gold', color: '#f8d787', shadowOn: false, shadow: '#8a6420', shade: 100, hold: true, edited: false },
+        { id: 'eyes', name: 'Eyes', color: '#e7d0f4', shadowOn: false, shadow: '#6e5a96', shade: 100, hold: true, edited: false },
+        { id: 'skin', name: 'Skin', color: '#e5b2ae', shadowOn: false, shadow: '#a86a66', shade: 100, hold: true, edited: false },
+        { id: 'line', name: 'Line', color: '#000000', shadowOn: false, shadow: '#000000', shade: 100, hold: true, edited: false },
+      ]
+    }
+
+    let source = null
+    let state = { rev: 0, groups: baseGroups(), swatches: {}, pixels: {} }
+    let selected = 'hair'
+    let tool = 'paint'
+    let brush = 1
+    let showParts = false
+    let showEdits = false
+    let dirty = false
+    let painting = false
+    let stroke = null
+    const undo = []
+
+    function hexToRgb(hex) {
+      const n = String(hex || '#000000').replace('#', '')
+      return [parseInt(n.slice(0, 2), 16) || 0, parseInt(n.slice(2, 4), 16) || 0, parseInt(n.slice(4, 6), 16) || 0]
+    }
+    function groupById(id) {
+      return state.groups.find((group) => group.id === id)
+    }
+    const PALETTE = Object.entries(MAP).map(([key, part]) => {
+      const [r, g, b] = key.split(',').map(Number)
+      return { part, r, g, b }
+    })
+    function nearestPart(r, g, b) {
+      const exact = MAP[r + ',' + g + ',' + b]
+      if (exact) return exact
+      let best = 'hair'
+      let bestDistance = 1e9
+      for (const swatch of PALETTE) {
+        const distance = (r - swatch.r) ** 2 + (g - swatch.g) ** 2 + (b - swatch.b) ** 2
+        if (distance < bestDistance) {
+          bestDistance = distance
+          best = swatch.part
+        }
+      }
+      return best
+    }
+    function originalPart(r, g, b) {
+      return nearestPart(r, g, b)
+    }
+    function eyeMarks(pixels) {
+      const count = SIZE * SIZE
+      const part = new Array(count).fill(null)
+      const eyeish = new Uint8Array(count)
+      for (let i = 0, p = 0; i < pixels.length; i += 4, p++) {
+        if (pixels[i + 3] < 16) continue
+        const name = nearestPart(pixels[i], pixels[i + 1], pixels[i + 2])
+        part[p] = name
+        if (name === 'eyes') eyeish[p] = 1
+      }
+      const seen = new Uint8Array(count)
+      const components = []
+      for (let start = 0; start < count; start++) {
+        if (!eyeish[start] || seen[start]) continue
+        const cells = []
+        const stack = [start]
+        seen[start] = 1
+        let skin = 0
+        let hair = 0
+        let bow = 0
+        let shirt = 0
+        while (stack.length) {
+          const current = stack.pop()
+          cells.push(current)
+          const x = current % SIZE
+          const y = (current - x) / SIZE
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const nx = x + dx
+              const ny = y + dy
+              if (nx < 0 || ny < 0 || nx >= SIZE || ny >= SIZE) continue
+              const next = ny * SIZE + nx
+              if (eyeish[next] && !seen[next]) {
+                seen[next] = 1
+                stack.push(next)
+              } else if (part[next] === 'skin') skin += 1
+              else if (part[next] === 'hair') hair += 1
+              else if (part[next] === 'bow') bow += 1
+              else if (part[next] === 'shirt') shirt += 1
+            }
+          }
+        }
+        components.push({ cells, skin, hair, bow, shirt })
+      }
+      const marks = new Uint8Array(count)
+      const iris = new Uint8Array(count)
+      for (const component of components) {
+        const size = component.cells.length
+        const isIris = size >= 3 && size <= 28 && component.skin >= 4 && component.hair >= 4 && component.bow < 12 && component.shirt < 15
+        if (!isIris) continue
+        for (const cell of component.cells) {
+          iris[cell] = 1
+          marks[cell] = 1
+        }
+      }
+      const nearIris = (cell, reach) => {
+        const x = cell % SIZE
+        const y = (cell - x) / SIZE
+        for (let dy = -reach; dy <= reach; dy++) {
+          for (let dx = -reach; dx <= reach; dx++) {
+            const nx = x + dx
+            const ny = y + dy
+            if (nx < 0 || ny < 0 || nx >= SIZE || ny >= SIZE) continue
+            if (iris[ny * SIZE + nx]) return true
+          }
+        }
+        return false
+      }
+      for (const component of components) {
+        if (component.cells.some((cell) => iris[cell])) continue
+        const white = component.cells.length <= 16 && component.cells.some((cell) => nearIris(cell, 4))
+        for (const cell of component.cells) marks[cell] = white ? 2 : 3
+      }
+      for (let p = 0; p < count; p++) {
+        if (part[p] !== 'shirt' || !nearIris(p, 2)) continue
+        const i = p * 4
+        if (Math.max(pixels[i], pixels[i + 1], pixels[i + 2]) >= 248) marks[p] = 2
+      }
+      return marks
+    }
+    function resolve(x, y, r, g, b) {
+      const pixel = state.pixels[x + ',' + y]
+      if (pixel) return pixel
+      const swatch = state.swatches[r + ',' + g + ',' + b]
+      if (swatch) return swatch
+      return originalPart(r, g, b)
+    }
+    function tint(id) {
+      if (DEBUG[id]) return DEBUG[id]
+      let hash = 0
+      for (const ch of id) hash = (hash * 33 + ch.charCodeAt(0)) % 360
+      const sat = 0.55
+      const light = 0.62
+      const span = sat * Math.min(light, 1 - light)
+      const channel = (n) => {
+        const k = (n + hash / 30) % 12
+        return Math.round(255 * (light - span * Math.max(-1, Math.min(k - 3, 9 - k, 1))))
+      }
+      return [channel(0), channel(8), channel(4)]
+    }
+    function rgbToHex(rgb) {
+      return '#' + rgb.map((channel) => channel.toString(16).padStart(2, '0')).join('')
+    }
+    function lightenHex(hex, amount) {
+      return rgbToHex(hexToRgb(hex).map((channel) => Math.round(channel + (255 - channel) * amount)))
+    }
+    function linkOf(group) {
+      const name = group.name.trim().toLowerCase().replace(/\s+/g, ' ')
+      if (name === 'hair 2' || name === 'shirt 2') return { kind: 'lighter', of: 'hair', amount: 0.55 }
+      if (name === 'eyes 2' || name === 'mouth') return { kind: 'keep' }
+      if (name === 'skin 2') return { kind: 'same', of: 'skin' }
+      return null
+    }
+    function linkedColor(group) {
+      const link = linkOf(group)
+      if (!link || link.kind === 'keep') return null
+      const source = groupById(link.of)
+      if (!source) return null
+      if (link.kind === 'same') return source.color
+      return lightenHex(source.color, link.amount)
+    }
+    const REF = { hair: 128, jacket: 95, shirt: 248, bow: 120, gold: 200, eyes: 210, skin: 229, line: 40 }
+    let creatureName = ''
+    function mixColor(group, r, g, b) {
+      const lit = hexToRgb(group.color)
+      const ref = group.ref || REF[group.id] || 160
+      let value = Math.max(r, g, b)
+      if (group.id === 'eyes') value = Math.max(value, 180)
+      const scale = (group.shade / 100) * (value / ref) + (1 - group.shade / 100)
+      if (group.shadowOn) {
+        const dark = hexToRgb(group.shadow)
+        return dark.map((channel, index) => Math.max(0, Math.min(255, Math.round(channel + (lit[index] - channel) * scale))))
+      }
+      return lit.map((channel) => Math.max(0, Math.min(255, Math.round(channel * scale))))
+    }
+    function paint() {
+      if (!source) return
+      const data = new Uint8ClampedArray(source)
+      const marks = eyeMarks(data)
+      const bag = {}
+      let movedCount = 0
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          const i = (y * SIZE + x) * 4
+          if (data[i + 3] < 16) continue
+          const from = originalPart(data[i], data[i + 1], data[i + 2])
+          const part = resolve(x, y, data[i], data[i + 1], data[i + 2])
+          const painted = state.pixels[x + ',' + y]
+          const mark = marks[y * SIZE + x]
+          const moved = part !== from
+          if (moved) {
+            movedCount += 1
+            const fromName = groupById(from)?.name || from
+            const toName = groupById(part)?.name || part
+            const label = fromName + ' → ' + toName
+            bag[label] = (bag[label] || 0) + 1
+          }
+          if (showEdits && !moved) {
+            data[i] = Math.round(data[i] * 0.22)
+            data[i + 1] = Math.round(data[i + 1] * 0.22)
+            data[i + 2] = Math.round(data[i + 2] * 0.22)
+            continue
+          }
+          const group = groupById(part)
+          if (showParts) {
+            const next = tint(!painted && mark === 3 ? 'hair' : part)
+            const scale = Math.max(data[i], data[i + 1], data[i + 2]) / 255
+            data[i] = Math.round(next[0] * (0.35 + 0.65 * scale))
+            data[i + 1] = Math.round(next[1] * (0.35 + 0.65 * scale))
+            data[i + 2] = Math.round(next[2] * (0.35 + 0.65 * scale))
+            continue
+          }
+          if (!painted && mark === 2) continue
+          if (!painted && mark === 3) {
+            const source = groupById('hair')
+            if (source) {
+              const base = hexToRgb(source.color)
+              const lift = (amount) => base.map((channel) => Math.round(channel + (255 - channel) * amount))
+              const low = lift(0.42)
+              const high = lift(0.7)
+              const tone = Math.max(0, Math.min(1, (Math.max(data[i], data[i + 1], data[i + 2]) - 43) / 210))
+              data[i] = Math.round(low[0] + (high[0] - low[0]) * tone)
+              data[i + 1] = Math.round(low[1] + (high[1] - low[1]) * tone)
+              data[i + 2] = Math.round(low[2] + (high[2] - low[2]) * tone)
+            }
+            continue
+          }
+          if (!group || part === 'keep') continue
+          const link = linkOf(group)
+          if (link?.kind === 'keep') continue
+          if (!link && !moved && group.hold && !group.edited) continue
+          let paintGroup = group
+          if (link?.kind === 'same') paintGroup = groupById(link.of) || group
+          if (link?.kind === 'lighter') {
+            const source = groupById(link.of)
+            if (source) {
+              const base = hexToRgb(source.color)
+              const lift = (amount) => base.map((channel) => Math.round(channel + (255 - channel) * amount))
+              const low = lift(0.42)
+              const high = lift(0.7)
+              const tone = Math.max(0, Math.min(1, (Math.max(data[i], data[i + 1], data[i + 2]) - 43) / 210))
+              data[i] = Math.round(low[0] + (high[0] - low[0]) * tone)
+              data[i + 1] = Math.round(low[1] + (high[1] - low[1]) * tone)
+              data[i + 2] = Math.round(low[2] + (high[2] - low[2]) * tone)
+            }
+            continue
+          }
+          const next = mixColor(paintGroup, data[i], data[i + 1], data[i + 2])
+          data[i] = next[0]
+          data[i + 1] = next[1]
+          data[i + 2] = next[2]
+        }
+      }
+      ctx.putImageData(new ImageData(data, SIZE, SIZE), 0, 0)
+      const lines = Object.entries(bag).map(([label, count]) => label + ' (' + count + ')')
+      document.getElementById('edits').textContent = movedCount ? lines.join(' · ') : 'No pixel changes yet.'
+    }
+    function renderGroups() {
+      const box = document.getElementById('groups')
+      box.innerHTML = ''
+      for (const group of state.groups) {
+        const row = document.createElement('div')
+        row.className = 'group' + (group.id === selected ? ' on' : '')
+        const name = document.createElement('button')
+        name.type = 'button'
+        name.textContent = group.name
+        name.addEventListener('click', () => {
+          selected = group.id
+          renderGroups()
+        })
+        const color = document.createElement('input')
+        color.type = 'color'
+        const link = linkOf(group)
+        const linked = linkedColor(group)
+        color.value = linked || group.color
+        if (link) {
+          color.disabled = true
+          color.dataset.link = group.id
+        }
+        color.addEventListener('input', () => {
+          group.color = color.value
+          group.edited = true
+          mark()
+          for (const input of document.querySelectorAll('[data-link]')) {
+            const owner = groupById(input.dataset.link)
+            const next = owner && linkedColor(owner)
+            if (next) input.value = next
+          }
+        })
+        const shadowLabel = document.createElement('label')
+        shadowLabel.className = 'note'
+        const shadowOn = document.createElement('input')
+        shadowOn.type = 'checkbox'
+        shadowOn.checked = group.shadowOn
+        if (link?.kind === 'lighter') shadowLabel.append(document.createTextNode('of hair'))
+        else if (link?.kind === 'same') shadowLabel.append(document.createTextNode('of skin'))
+        else if (link?.kind === 'keep') shadowLabel.append(document.createTextNode('stays'))
+        else shadowLabel.append(shadowOn, document.createTextNode(' own'))
+        shadowOn.addEventListener('change', () => {
+          group.shadowOn = shadowOn.checked
+          group.edited = true
+          shadow.disabled = !group.shadowOn
+          mark()
+        })
+        const shadow = document.createElement('input')
+        shadow.type = 'color'
+        shadow.value = group.shadow
+        shadow.disabled = Boolean(link) || !group.shadowOn
+        shadow.addEventListener('input', () => {
+          group.shadow = shadow.value
+          group.shadowOn = true
+          shadowOn.checked = true
+          shadow.disabled = false
+          group.edited = true
+          mark()
+        })
+        const shade = document.createElement('input')
+        shade.type = 'range'
+        shade.min = '0'
+        shade.max = '100'
+        shade.value = String(group.shade)
+        const out = document.createElement('output')
+        out.textContent = String(group.shade)
+        shade.addEventListener('input', () => {
+          group.shade = Number(shade.value)
+          group.edited = true
+          out.textContent = shade.value
+          mark()
+        })
+        row.append(name, color, shadowLabel, shadow, shade, out)
+        if (group.custom) {
+          const remove = document.createElement('button')
+          remove.type = 'button'
+          remove.textContent = '×'
+          remove.addEventListener('click', () => {
+            remember()
+            state.groups = state.groups.filter((item) => item.id !== group.id)
+            for (const key of Object.keys(state.pixels)) if (state.pixels[key] === group.id) delete state.pixels[key]
+            for (const key of Object.keys(state.swatches)) if (state.swatches[key] === group.id) delete state.swatches[key]
+            if (selected === group.id) selected = 'hair'
+            renderGroups()
+            mark()
+          })
+          row.append(remove)
+        }
+        box.append(row)
+      }
+    }
+    function mark() {
+      dirty = true
+      document.getElementById('status').textContent = 'Saving…'
+      paint()
+      clearTimeout(mark.timer)
+      mark.timer = setTimeout(save, 250)
+    }
+    async function save() {
+      const rev = state.rev + 1
+      const body = JSON.stringify({ ...state, rev })
+      try {
+        const res = await fetch('/lily-color-adjust.json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        })
+        if (!res.ok) throw new Error('save')
+        state.rev = rev
+        dirty = false
+        document.getElementById('status').textContent = creatureName
+          ? creatureName + ' is on the picture. Say when you are done and I will put this on her.'
+          : 'Saved. I can see this, and it will go on her when you say you are done.'
+      } catch {
+        document.getElementById('status').textContent = 'Not saved yet. Leave this page open and I will retry.'
+        setTimeout(save, 1500)
+      }
+    }
+    function remember() {
+      undo.push(JSON.stringify({ swatches: state.swatches, pixels: state.pixels, groups: state.groups }))
+      if (undo.length > 40) undo.shift()
+    }
+    function baseSize() {
+      return Math.min(window.innerHeight * 0.72, 560)
+    }
+    function applyZoom(next, clientX, clientY) {
+      const rect = card.getBoundingClientRect()
+      const offsetX = card.scrollLeft + (clientX - rect.left)
+      const offsetY = card.scrollTop + (clientY - rect.top)
+      const clamped = Math.min(24, Math.max(1, next))
+      const scale = clamped / zoom
+      zoom = clamped
+      const size = baseSize() * zoom
+      view.style.width = size + 'px'
+      view.style.height = size + 'px'
+      card.scrollLeft = offsetX * scale - (clientX - rect.left)
+      card.scrollTop = offsetY * scale - (clientY - rect.top)
+    }
+    card.addEventListener('wheel', (event) => {
+      if (!event.ctrlKey && !event.metaKey) return
+      event.preventDefault()
+      applyZoom(zoom * (event.deltaY < 0 ? 1.2 : 1 / 1.2), event.clientX, event.clientY)
+    }, { passive: false })
+    function pixelAt(event) {
+      const rect = view.getBoundingClientRect()
+      return {
+        x: Math.min(SIZE - 1, Math.max(0, Math.floor(((event.clientX - rect.left) / rect.width) * SIZE))),
+        y: Math.min(SIZE - 1, Math.max(0, Math.floor(((event.clientY - rect.top) / rect.height) * SIZE))),
+      }
+    }
+    function stamp(x, y) {
+      const i0 = (y * SIZE + x) * 4
+      if (source[i0 + 3] < 16) return
+      if (tool === 'sample') {
+        selected = resolve(x, y, source[i0], source[i0 + 1], source[i0 + 2])
+        if (!groupById(selected)) selected = 'hair'
+        return
+      }
+      if (tool === 'color') {
+        const colorKey = source[i0] + ',' + source[i0 + 1] + ',' + source[i0 + 2]
+        if (selected) state.swatches[colorKey] = selected
+        for (let p = 0; p < source.length; p += 4) {
+          if (source[p] + ',' + source[p + 1] + ',' + source[p + 2] !== colorKey) continue
+          delete state.pixels[(p / 4) % SIZE + ',' + Math.floor(p / 4 / SIZE)]
+        }
+        return
+      }
+      const radius = (brush - 1) / 2
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const px = x + dx
+          const py = y + dy
+          if (px < 0 || py < 0 || px >= SIZE || py >= SIZE) continue
+          const i = (py * SIZE + px) * 4
+          if (source[i + 3] < 16) continue
+          const key = px + ',' + py
+          if (tool === 'erase') delete state.pixels[key]
+          else state.pixels[key] = selected
+        }
+      }
+    }
+    function describe(x, y) {
+      const i = (y * SIZE + x) * 4
+      if (source[i + 3] < 16) {
+        document.getElementById('hit').textContent = 'Empty pixel.'
+        return
+      }
+      const part = resolve(x, y, source[i], source[i + 1], source[i + 2])
+      const name = groupById(part)?.name || part
+      document.getElementById('hit').textContent = x + ', ' + y + ' is ' + name
+    }
+    view.addEventListener('pointerdown', (event) => {
+      if (!source) return
+      painting = true
+      view.setPointerCapture(event.pointerId)
+      stroke = JSON.stringify({ swatches: state.swatches, pixels: state.pixels })
+      const { x, y } = pixelAt(event)
+      if (tool === 'sample') {
+        stamp(x, y)
+        renderGroups()
+        describe(x, y)
+        painting = false
+        return
+      }
+      stamp(x, y)
+      describe(x, y)
+      mark()
+    })
+    view.addEventListener('pointermove', (event) => {
+      if (!source) return
+      const { x, y } = pixelAt(event)
+      loupe.style.display = 'block'
+      const chip = ctx.getImageData(Math.min(SIZE - 16, Math.max(0, x - 8)), Math.min(SIZE - 16, Math.max(0, y - 8)), 16, 16)
+      loupeCtx.imageSmoothingEnabled = false
+      loupeCtx.putImageData(chip, 0, 0)
+      if (!painting || tool === 'sample') return
+      stamp(x, y)
+      describe(x, y)
+      mark()
+    })
+    view.addEventListener('pointerup', () => {
+      painting = false
+      if (!stroke) return
+      const now = JSON.stringify({ swatches: state.swatches, pixels: state.pixels })
+      if (now !== stroke) undo.push(stroke)
+      if (undo.length > 40) undo.shift()
+      stroke = null
+    })
+    function setTool(next) {
+      tool = next
+      for (const id of ['paint', 'color', 'sample', 'erase']) {
+        document.getElementById('tool-' + id).className = id === next ? 'on' : ''
+      }
+    }
+    for (const id of ['paint', 'color', 'sample', 'erase']) {
+      document.getElementById('tool-' + id).addEventListener('click', () => setTool(id))
+    }
+    for (const size of [1, 3, 5]) {
+      document.getElementById('brush-' + size).addEventListener('click', () => {
+        brush = size
+        for (const other of [1, 3, 5]) document.getElementById('brush-' + other).className = other === size ? 'on' : ''
+      })
+    }
+    document.getElementById('show-parts').addEventListener('click', (event) => {
+      showParts = !showParts
+      event.target.className = showParts ? 'on' : ''
+      paint()
+    })
+    document.getElementById('show-edits').addEventListener('click', (event) => {
+      showEdits = !showEdits
+      event.target.className = showEdits ? 'on' : ''
+      paint()
+    })
+    document.getElementById('undo').addEventListener('click', () => {
+      const previous = undo.pop()
+      if (!previous) return
+      const data = JSON.parse(previous)
+      state.swatches = data.swatches
+      state.pixels = data.pixels
+      if (!state.framePixels) state.framePixels = {}
+      state.framePixels[frameId] = data.pixels
+      if (data.groups) state.groups = data.groups
+      renderGroups()
+      mark()
+    })
+    function addGroup() {
+      const input = document.getElementById('group-name')
+      const name = input.value.trim()
+      if (!name) {
+        input.focus()
+        return
+      }
+      remember()
+      const id = 'g' + Date.now().toString(36)
+      state.groups.push({
+        id,
+        name,
+        color: '#d8d2c8',
+        shadowOn: true,
+        shadow: '#5c564e',
+        shade: 100,
+        hold: false,
+        edited: true,
+        custom: true,
+      })
+      selected = id
+      input.value = ''
+      renderGroups()
+      mark()
+    }
+    document.getElementById('add').addEventListener('click', addGroup)
+    document.getElementById('group-name').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        addGroup()
+      }
+    })
+    document.getElementById('reset').addEventListener('click', () => {
+      if (!confirm('Clear every color edit on this frame?')) return
+      remember()
+      const rev = state.rev
+      state = { rev, groups: baseGroups(), swatches: {}, pixels: {} }
+      selected = 'hair'
+      renderGroups()
+      mark()
+    })
+    let overCard = false
+    card.addEventListener('pointerenter', () => { overCard = true })
+    card.addEventListener('pointerleave', () => { overCard = false })
+    window.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && event.target.id !== 'group-name') {
+        event.preventDefault()
+        document.getElementById('undo').click()
+        return
+      }
+      if (!overCard || !(event.ctrlKey || event.metaKey)) return
+      const rect = card.getBoundingClientRect()
+      const x = rect.left + rect.width / 2
+      const y = rect.top + rect.height / 2
+      if (event.key === '=' || event.key === '+') {
+        event.preventDefault()
+        applyZoom(zoom * 1.2, x, y)
+      } else if (event.key === '-' || event.key === '_') {
+        event.preventDefault()
+        applyZoom(zoom / 1.2, x, y)
+      } else if (event.key === '0') {
+        event.preventDefault()
+        applyZoom(1, x, y)
+      }
+    })
+    async function pull() {
+      if (dirty) return
+      try {
+        const res = await fetch('/lily-color-adjust.json', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data || !Array.isArray(data.groups) || !data.groups.length) return
+        if (data.rev === state.rev) return
+        state = data
+        if (!groupById(selected)) selected = state.groups[0].id
+        bindFrame(state.frameId || frameId)
+        renderGroups()
+        paint()
+        document.getElementById('status').textContent = 'Loaded the latest edits.'
+      } catch { /* the page still paints from the original frame */ }
+    }
+    function takeOldAdjustments() {
+      const raw = localStorage.getItem('lily-color-adjust')
+      if (!raw) return
+      localStorage.removeItem('lily-color-adjust')
+      try {
+        const old = JSON.parse(raw)
+        if (old.map) state.swatches = { ...old.map }
+        if (old.colors) {
+          const base = Object.fromEntries(baseGroups().map((group) => [group.id, group.color]))
+          for (const group of state.groups) {
+            const next = old.colors[group.id]
+            if (!next || next.toLowerCase() === base[group.id]) continue
+            group.color = next
+            group.edited = true
+          }
+        }
+        if (old.shades) {
+          for (const group of state.groups) {
+            if (old.shades[group.id] == null || Number(old.shades[group.id]) === 100) continue
+            group.shade = Number(old.shades[group.id])
+            group.edited = true
+          }
+        }
+      } catch { /* ignore a bad older save */ }
+    }
+    function bindFrame(id) {
+      if (!state.framePixels) state.framePixels = {}
+      if (!state.framePixels[id]) state.framePixels[id] = id === 'crossed-1-1' && state.pixels ? state.pixels : {}
+      state.pixels = state.framePixels[id]
+      state.frameId = id
+      frameId = id
+    }
+    function loadFrame(id, andSave) {
+      const item = FRAMES.find((entry) => entry.id === id) || FRAMES[0]
+      bindFrame(item.id)
+      const select = document.getElementById('frame')
+      select.value = item.id
+      document.getElementById('frame-label').textContent = 'Folded arms, ' + item.label + '. Paint stays on this frame. Ctrl and the wheel zoom.'
+      const img = new Image()
+      img.onload = () => {
+        ctx.imageSmoothingEnabled = false
+        ctx.clearRect(0, 0, SIZE, SIZE)
+        ctx.drawImage(img, 0, 0)
+        source = new Uint8ClampedArray(ctx.getImageData(0, 0, SIZE, SIZE).data)
+        paint()
+        if (andSave) mark()
+      }
+      img.onerror = () => {
+        document.getElementById('frame-label').textContent = 'That folded-arms frame did not load.'
+      }
+      img.src = item.src
+    }
+    function stepFrame(direction) {
+      const index = Math.max(0, FRAMES.findIndex((entry) => entry.id === frameId))
+      loadFrame(FRAMES[(index + direction + FRAMES.length) % FRAMES.length].id, true)
+    }
+    const frameSelect = document.getElementById('frame')
+    for (const entry of FRAMES) {
+      const option = document.createElement('option')
+      option.value = entry.id
+      option.textContent = entry.label
+      frameSelect.append(option)
+    }
+    frameSelect.addEventListener('change', () => loadFrame(frameSelect.value, true))
+    document.getElementById('frame-prev').addEventListener('click', () => stepFrame(-1))
+    document.getElementById('frame-next').addEventListener('click', () => stepFrame(1))
+    function mixHex(from, to, amount) {
+      const left = hexToRgb(from)
+      const right = hexToRgb(to)
+      return rgbToHex(left.map((channel, index) => Math.round(channel + (right[index] - channel) * amount)))
+    }
+    function applyCreature() {
+      let save
+      try { save = JSON.parse(localStorage.getItem('buddy-ai-v4') || '') } catch { return false }
+      const buddy = (save.buddies || []).find((item) => item.id === save.activeId) || (save.buddies || [])[0]
+      if (!buddy?.dna) return false
+      const dna = buddy.dna
+      creatureName = buddy.name || ''
+      const colors = {
+        hair: dna.pattern === 'point' ? dna.spot : dna.base,
+        jacket: dna.spot,
+        shirt: mixHex('#ffffff', dna.belly, 0.62),
+        bow: dna.accent,
+        gold: dna.rarity === 'legendary' ? dna.accent : '#f5d37f',
+        eyes: dna.eye,
+      }
+      let changed = false
+      for (const group of state.groups) {
+        const next = colors[group.id]
+        if (!next || group.color.toLowerCase() === next.toLowerCase()) continue
+        group.color = next
+        group.edited = true
+        group.shadowOn = false
+        changed = true
+      }
+      return changed
+    }
+    async function openAdjuster() {
+      await pull()
+      if (state.rev === 0) takeOldAdjustments()
+      const changed = applyCreature()
+      renderGroups()
+      loadFrame(state.frameId || 'crossed-1-1', changed)
+      setInterval(pull, 1500)
+    }
+    openAdjuster()
+  </script>
+</body>
+</html>

@@ -1,0 +1,1709 @@
+CRITTERS
+
+Full Product, Game & Business Plan — Revised
+
+Concept: An AI-powered virtual creature ecosystem combining Tamagotchi-style care, Pokémon-inspired battles, autonomous AI companions and Web3 ownership.
+
+Core philosophy:
+
+CRITTERS is not simply an NFT collection or another play-to-earn game. It is a living creature experience.
+
+Every player hatches a unique creature that develops its own personality, remembers its experiences, reacts to its owner and progresses through its life.
+
+Players care for their creatures, train them, send them on expeditions, compete in the arena and eventually witness their creature awaken into its ultimate form.
+
+The original creature, its DNA, identity and history are never replaced.
+
+The game is free to start. A player can care for a creature and fight for free. Revenue comes from a percentage of paid battle pots, and later from premium AI, optional content, and marketplace activity.
+
+Existing $SOUL token holders receive additional gameplay and experience benefits based on their wallet holdings.
+
+1. The Core Concept
+
+CRITTERS combines four main ideas:
+
+Tamagotchi: A creature that needs attention, food, rest and care.
+
+Pokémon: Unique creatures with personality, attributes, progression and battles.
+
+AI companions: Creatures that communicate, remember and develop individual behaviour.
+
+Web3 ownership: A creature's identity and ownership are connected to a blockchain wallet.
+
+The main differentiator is that the creature should feel alive rather than like a static NFT.
+
+It should have its own personality, habits, moods, preferences and memories. It should react to what happens in its life and gradually develop a history with its owner.
+
+The experience takes place on one screen. The player does not need another device, application or physical toy.
+
+The three gameplay pillars
+
+CRITTERS is built around three connected experiences:
+
+Companion: Care, AI, personality, memory and awakening.
+
+Arena: Battles, rankings, achievements and competitions.
+
+Exploration: Expeditions, discoveries, resources and progression.
+
+Everything in the game supports one of these pillars.
+
+There are no separate robot games, machine-building systems or multiple disconnected battle modes.
+
+2. The Creature System
+
+2.1 Hatching
+
+At launch, each wallet can hatch one creature.
+
+The first species will be cats. Other species can be introduced later, each with their own appearance system and characteristics.
+
+Every creature is generated from a deterministic seed. The seed is the wallet.
+
+The same wallet always produces the same creature. Hatch, close the machine, and hatch again: the same cat, the same rarity, the same coat. A second attempt does not roll. There is no button that tries again until the result is legendary.
+
+A different wallet is a different address, so it is a different creature. That is the only way to see another roll. It is still one creature for that wallet, still computed, still not a slot machine. Legendary is about one address in fifty, and a legendary coat does not win the table. Hunting addresses buys outfits, not champions.
+
+Hatch itself does not call the AI and does not generate an image. The numbers and the coat are math. The model speaks later, when someone is actually keeping the creature. A wallet that hatches and leaves does not receive a conversation budget, stored portraits, or a stream of inference.
+
+A bot can generate wallets at no cost. Those addresses are not creatures. A hatch exists only after that wallet signs the hatch transaction and it confirms. The bot pays the network fee and the account rent on every attempt. CRITTERS does not. Unsigned calls, repeated calls, and lists of fresh addresses are dropped before anything is stored.
+
+What the bot still cannot collect:
+
+A second roll on a wallet that already hatched.
+
+A legendary that wins pots. The coat is rarer. The fight is the same.
+
+A soul it can sell. The creature is soulbound.
+
+An AI bill. Model calls start when a kept creature is spoken to, and a silent mint gets none.
+
+The picture is computed from the seed when someone looks. It is not rendered into a file for every mint. A thousand abandoned hatches are a thousand small chain accounts the bot funded, and a thousand rows that do not call the model.
+
+Each creature receives:
+
+A unique name.
+
+A species.
+
+A rarity.
+
+A coat and pattern.
+
+Eye colour.
+
+Accessories and mutations.
+
+Six personality traits.
+
+Initial gameplay attributes.
+
+A unique identity and history.
+
+The creature should feel individually generated rather than selected from a collection of predefined characters.
+
+2.2 Rarity
+
+The initial rarity system:
+
+Common
+
+Uncommon
+
+Rare
+
+Legendary
+
+Measured across 200,000 seeds, the coat odds are:
+
+Common 59.9%
+
+Uncommon 28.3%
+
+Rare 9.7%
+
+Legendary 2.1%
+
+Legendary is the ceremonial outfit, about one wallet in fifty. It does not decide a scrap. The earlier 37 / 39 / 18 / 5.5 split was the first sketch, from when a rare coat was being kept out of the win column. The fight no longer cares, so the ceremonial coat can be the rare one.
+
+Rarity determines the creature's rarity classification, not its ability to awaken or its guaranteed battle strength.
+
+A Common creature should still be capable of becoming an important character through its history and achievements.
+
+2.3 Personality
+
+Every creature receives six personality traits:
+
+Mischief
+
+Affection
+
+Introversion
+
+Vigor
+
+Curiosity
+
+Independence
+
+These traits influence how the creature behaves.
+
+For example:
+
+A mischievous creature may enjoy causing trouble.
+
+An affectionate creature may frequently seek attention.
+
+An introverted creature may prefer quiet activities.
+
+A curious creature may enjoy exploration.
+
+An independent creature may prefer doing things alone.
+
+A creature with high vigor may be more energetic.
+
+Personality influences dialogue, animations, preferences, daily activities and gameplay decisions.
+
+Personality is generated at hatch and should not be rerolled by AI.
+
+2.4 Gameplay attributes
+
+Personality also contributes to the creature's gameplay attributes.
+
+Attribute
+
+Derived from
+
+Strength
+
+Vigor
+
+Intelligence
+
+Curiosity
+
+Speed
+
+Vigor + Mischief
+
+Defense
+
+Independence
+
+Luck
+
+Small rarity influence
+
+Additional factors such as energy, happiness, hunger and mood influence performance during gameplay.
+
+The exact attribute formula needs balancing and testing.
+
+3. The Living AI Companion
+
+This is the heart of CRITTERS.
+
+The creature should not simply display predetermined dialogue. It should feel like an individual character.
+
+3.1 Personality-driven AI
+
+The AI receives the creature's personality, current needs, memories, history and situation.
+
+It uses these characteristics to determine how to respond.
+
+Two creatures experiencing the same situation should be capable of responding differently.
+
+For example:
+
+One cat becomes excited when its owner returns.
+
+Another ignores the owner initially.
+
+One frequently asks for food.
+
+Another becomes annoyed when interrupted.
+
+One enjoys exploration.
+
+Another prefers sleeping in its room.
+
+The AI should never randomly change the creature's underlying identity or personality.
+
+3.2 Memory
+
+Each creature develops memories throughout its life.
+
+The memory system should include:
+
+Owner interactions.
+
+Important conversations.
+
+Feeding and care history.
+
+Battles and victories.
+
+Battles lost.
+
+Missions completed.
+
+Periods of neglect.
+
+Important milestones.
+
+Awakening history.
+
+The creature should be able to refer to past experiences naturally.
+
+For example, it might remember losing an important battle, being fed after a long absence or completing a difficult expedition.
+
+3.3 Autonomous behaviour
+
+The creature should have a daily routine.
+
+It can independently:
+
+Sleep.
+
+Eat.
+
+Explore its room.
+
+Play.
+
+Become bored.
+
+React to its surroundings.
+
+Make comments.
+
+Create journal entries.
+
+Display different moods.
+
+Higher $SOUL holder tiers can unlock more advanced autonomous behaviour and deeper AI capabilities.
+
+The AI should not need to generate every movement or animation. Most behaviour should be handled by a deterministic game system.
+
+AI generation should be reserved for meaningful interactions, conversations and events.
+
+This keeps operating costs under control.
+
+4. Care and Creature Needs
+
+The Tamagotchi aspect gives players a reason to return.
+
+Each creature has several needs:
+
+Hunger.
+
+Energy.
+
+Happiness.
+
+Trust.
+
+Mood.
+
+Players interact with their creatures through:
+
+Feeding.
+
+Petting.
+
+Talking.
+
+Playing.
+
+Resting.
+
+Training.
+
+Other care activities.
+
+Care affects the creature's daily experience and its ability to participate in activities.
+
+A neglected creature may become hungry, tired or unhappy.
+
+However, the system should not punish players excessively for taking breaks. It should create attachment rather than become an obligation.
+
+4.1 Trust and history
+
+Trust develops through sustained interaction.
+
+It should not be possible to maximise trust through a single session of repetitive actions.
+
+The system should consider:
+
+Consistent care.
+
+Cared-for days.
+
+Returning after periods of absence.
+
+Meaningful interactions.
+
+Feeding and attention.
+
+Important shared experiences.
+
+These factors also contribute to the creature's eventual awakening eligibility.
+
+5. Creature Life Stages and Awakening
+
+This is the main differentiating feature of CRITTERS.
+
+A creature starts as a pixel-art cat.
+
+Eventually, after developing through its life, it can awaken into its ultimate form: a girl.
+
+The important part is that this is the same creature.
+
+It is not a new NFT, a replacement character or a second identity.
+
+5.1 One soul, two presentations
+
+The cat and awakened girl share:
+
+The same identity.
+
+The same name.
+
+The same personality.
+
+The same DNA.
+
+The same history.
+
+The same attributes.
+
+The same wallet ownership.
+
+The same progression.
+
+The cat remains part of the creature's history and life card.
+
+The awakened girl is simply its next presentation.
+
+5.2 Lily sprite system
+
+The project references an existing Lily sprite pack in the game assets.
+
+The pack includes approximately 70 animation clips, covering expressions and actions such as:
+
+Idle.
+
+Talking.
+
+Waving.
+
+Blushing.
+
+Crying.
+
+Angry reactions.
+
+Eating.
+
+Yawning.
+
+Other expressions and movements.
+
+The plan is to reuse this existing sprite pack.
+
+The girl's appearance is derived from the original cat DNA through a deterministic awakenedLook(dna) function.
+
+The mapping includes:
+
+Cat coat colour → hair colour.
+
+Cat pattern → hair treatment.
+
+Eye genes → eye colour.
+
+Accessories → corresponding visual elements.
+
+Other genes → permitted details of the outfit and presentation.
+
+Rarity can determine which existing presentation variants are available, but should not determine whether a creature can awaken.
+
+The important restriction is that the original DNA is never changed.
+
+No paid skins, holder skins, recolouring or cosmetic modifications to the creature's generated appearance.
+
+5.3 The road from hatch to awakening
+
+Hatch is the start. Awakening is the first morning the life is full enough. Nothing in between is a level bar, a pack, or a fee.
+
+The player does four kinds of things. All four have to have happened. One of them cannot finish the road alone.
+
+Care. Feed her, pet her, talk, play, let her rest. A cared-for day is a day she was fed and the machine was opened. Twelve of those days are required, and they have to fall across at least fourteen calendar days. A single sitting cannot produce them. A weekend cannot produce them. A bigger $SOUL bag makes the meal fill more, so the day is easier to complete. It does not turn two days into twelve.
+
+Trust. It rises from those days, and from coming back after being away. It has to hold, not spike. One afternoon of tapping feed does not max it. Trust has to have stayed high on more than one of the cared-for days.
+
+A journal with different kinds of memory. At least one bond (she was fed, petted, or named), one moment (a scrap, a game, a mess, a scolding), one habit (she slept, or kept a routine), and one away (she noticed a gap, and the owner returned). The away memory is the one a bot cannot finish in an hour.
+
+A fight. At least three scraps, free or paid, or scraps plus a refusal when she was too tired or too hungry to sit. The arena is part of the life. It is not the whole life.
+
+The engine checks this when the machine is opened. The model does not. Money, crystals, rarity, and holdings do not appear in the check.
+
+Neglect pauses the road. If she is starving, or the absence is still open, the count waits. Feeding her and coming back resumes it. The missed days stay written. They are not deleted, and they are not required to be perfect.
+
+Twelve cared-for days across two weeks is the shape. The exact counts can be tuned once people are actually keeping cats. The shape should not change: time, trust, more than one kind of memory, and a few fights.
+
+5.4 The awakening moment
+
+The scene plays the first time the check passes and she is awake on the glass. Not while she is asleep. Not from a button in a shop.
+
+The cat settles. The next frame is the girl, dyed from the coat she already had. Same name. The journal stays open. After that, the same glass plays her clips.
+
+The original cat remains on the life card and in the journal.
+
+6. Main Gameplay: Companion
+
+The Companion experience is the main reason to own a CRITTER.
+
+It includes:
+
+Daily care.
+
+AI conversations.
+
+Personality.
+
+Memory.
+
+Mood and needs.
+
+Training.
+
+Creature progression.
+
+Journal and history.
+
+Awakening.
+
+The creature should always have something meaningful happening, even when the player is not actively interacting.
+
+The home environment provides the visual centre of this experience.
+
+6.1 Training
+
+Training is a supporting activity within the Companion experience, not a separate game mode.
+
+Players can train their creatures to develop their capabilities.
+
+Training can involve:
+
+Strength.
+
+Intelligence.
+
+Speed.
+
+Defense.
+
+Other activities related to personality.
+
+Training should be balanced and should not allow paid users to bypass progression.
+
+6.2 Resting
+
+Traditional staking for fixed token yield is not part of the concept.
+
+Resting is a creature activity.
+
+When a creature rests:
+
+It appears asleep.
+
+Energy regenerates.
+
+Energy-consuming activities are unavailable.
+
+Hunger can still increase.
+
+Early waking may leave the creature tired.
+
+Resting does not generate financial yield.
+
+6.3 Creature home
+
+Every creature has a home.
+
+The home is a persistent environment containing:
+
+Bed.
+
+Food bowl.
+
+Furniture.
+
+Interactive objects.
+
+Daily activities.
+
+The awakened girl occupies the same home as the original cat.
+
+Holder benefits can unlock additional room functionality and interactions without modifying the creature's seed-generated appearance.
+
+7. Main Gameplay: Arena
+
+The Arena is the central competitive activity.
+
+There is one battle system, shared by cats and awakened girls.
+
+Awakening does not increase stats or change battle calculations.
+
+7.1 Creature battles
+
+The initial system focuses on 1v1 battles.
+
+The engine evaluates:
+
+Creature attributes.
+
+Personality.
+
+Energy.
+
+Happiness.
+
+Hunger.
+
+Mood.
+
+Other battle conditions.
+
+For example, a tired or hungry creature may perform worse.
+
+Rarity should only have a small influence, preventing the arena from becoming a contest of who hatched the rarest creature.
+
+The battle engine determines the result.
+
+AI can provide commentary, tactical dialogue and reactions, but it does not decide the winner.
+
+7.2 Free battles
+
+Free battles should be available to everyone.
+
+They provide:
+
+Experience.
+
+Ranking progression.
+
+Achievements.
+
+Gameplay rewards.
+
+Battle history.
+
+This gives non-paying users a meaningful reason to participate.
+
+A free battle uses the same engine as a paid one. The odds do not improve because money is on the table.
+
+7.3 Paid battles
+
+Paid battles are the same 1v1, with a pot.
+
+Both players lock SOL into the match. The winner receives the pot. CRITTERS takes a percentage off the top. That percentage is the fee. It is shown before either player signs, and it is the same percentage on every table.
+
+The flow:
+
+The challenger locks their buy-in.
+
+The other owner has until the next day to match it.
+
+If they do not match, the buy-in unlocks. Nobody is forced to fight.
+
+When both sides are in, the engine settles the scrap.
+
+The winner is paid from the pot. The fee is taken in that same settlement.
+
+A sleeping, starving, or exhausted creature cannot be entered. The machine does not take the SOL. Personality can still refuse.
+
+Cats and awakened girls sit the same tables. Waking does not change the fee, the odds, or the size of the pot.
+
+Free battles stay open for practice, rank, and history. Paid battles are how a player wins SOL. The public record shows SOL won and lost beside the win count.
+
+The engine publishes that percentage as 5% (`POT_FEE`). It is one number. It does not change per player, per rarity, or because she is awake. Changing the fee means changing that constant.
+
+Any table that pays a monetary prize needs legal review in the jurisdictions where it is offered.
+
+7.4 Rankings and competitions
+
+The Arena includes:
+
+Individual creature rankings.
+
+Leaderboards.
+
+Daily and weekly competitions.
+
+Seasonal championships.
+
+Battle achievements.
+
+Historical results.
+
+7.5 King of the Arena
+
+A special competitive system can have one King of the Arena.
+
+The champion holds the position until defeated.
+
+The system records:
+
+Current champion.
+
+Reign duration.
+
+Victories.
+
+Successful defences.
+
+Previous champions.
+
+The title follows the same creature identity across awakening.
+
+There is one ladder shared by cats and awakened girls.
+
+A challenge for the throne uses the same paid table. The challenger posts the purse. The champion matches it or stands down. The winner takes the pot after the same percentage. The crown is the record on the life card. It is not a larger share of the odds.
+
+7.6 Later competitions
+
+Further tournaments can be added after the single paid table works.
+
+These can offer seasonal events and exclusive achievements. They use the same engine and the same percentage. They do not introduce a second battle formula.
+
+8. Main Gameplay: Exploration
+
+Exploration is the supporting gameplay system.
+
+Instead of introducing separate dungeons, world bosses, mining games and other independent modes, all exploration activities are part of one expedition system.
+
+8.1 Expeditions
+
+Players send their creatures on expeditions.
+
+Possible expedition types:
+
+Exploration.
+
+Resource discovery.
+
+Research.
+
+Special challenges.
+
+Treasure hunting.
+
+Story-based discoveries.
+
+The creature's attributes, personality, mood and energy can influence expedition outcomes.
+
+For example:
+
+A curious creature may perform well on exploration missions.
+
+A high-vigor creature may handle demanding routes.
+
+A tired creature may refuse a difficult expedition.
+
+An independent creature may prefer certain missions.
+
+8.2 Expedition results
+
+Expeditions can produce:
+
+Experience.
+
+Resources.
+
+Collectible items.
+
+Achievements.
+
+Journal entries.
+
+Special discoveries.
+
+Rewards should be balanced so that players cannot endlessly farm valuable resources.
+
+8.3 Progression
+
+Exploration gives players another way to develop their creatures outside the Arena.
+
+It also creates additional content for the journal and gives the AI meaningful experiences to remember.
+
+Premium expeditions can be introduced as optional content, but basic exploration must remain available to free players.
+
+9. Additional Systems Supporting the Three Pillars
+
+These are supporting systems rather than independent game modes.
+
+9.1 Creature journal
+
+Every creature has a persistent journal.
+
+It records:
+
+Important interactions.
+
+Care milestones.
+
+Significant conversations.
+
+Battles.
+
+Expedition discoveries.
+
+Achievements.
+
+Periods of absence.
+
+Awakening.
+
+The journal helps establish the creature's unique history.
+
+9.2 Trading cards
+
+Each creature can have a two-sided collectible card.
+
+Front:
+
+Current presentation.
+
+Name.
+
+Rarity.
+
+Attributes.
+
+Personality.
+
+Back:
+
+Original cat.
+
+Hatch date.
+
+Awakening date.
+
+Titles.
+
+Journal highlights.
+
+Battle history.
+
+This gives every creature a persistent record of its life.
+
+9.3 Player profiles and discovery
+
+Players can have public profiles containing:
+
+Their creature.
+
+Current life stage.
+
+Achievements.
+
+Battle records.
+
+Rankings.
+
+Relevant history.
+
+The Discover section allows players to explore other creatures.
+
+There are no creature-to-creature relationships.
+
+No friendship, rivalry, relationship or bonding system will be implemented.
+
+The emotional focus stays on the individual creature and its owner.
+
+10. $SOUL Holder Benefits
+
+10.1 Existing token, not an in-game currency
+
+$SOUL is the existing Pump.fun token.
+
+CRITTERS will not create a new token economy.
+
+There will be:
+
+No new in-game token.
+
+No $SOUL staking.
+
+No token locking.
+
+No fixed token yield.
+
+No token rewards for playing.
+
+No requirement to spend $SOUL to play.
+
+No token requirement for awakening.
+
+No holder reward paid in $SOUL, SOL, or any other token.
+
+The token launched on pump.fun. CRITTERS does not control the supply, so it cannot emit, airdrop, or pay holders in tokens. A perk that required new tokens cannot exist.
+
+Instead, CRITTERS reads the $SOUL balance of the connected wallet.
+
+That balance determines in-game privileges: food, crystals, and how comfortable the day is to play. The privileges are never a payout.
+
+The token is an external eligibility check, not an in-game payment currency, and not a reward.
+
+10.2 Holder verification
+
+The process:
+
+Player connects a wallet.
+
+Player hatches a creature.
+
+The wallet is associated with the creature.
+
+CRITTERS reads the wallet's $SOUL holdings.
+
+The holder tier is calculated.
+
+Eligible benefits are activated.
+
+Balances are periodically checked again.
+
+The system should verify balances server-side using the official token mint address.
+
+The player interface should clearly show the current holder tier and which benefits are unlocked.
+
+10.3 Holder benefits
+
+Creature appearance is determined by DNA. Holder benefits must not modify the cat or awakened girl's appearance.
+
+Benefits are things the creature consumes or feels during play. They are not tokens, and they are not paid out.
+
+A zero balance still has the full creature. Holding makes the day easier. It does not make her hit harder, and it does not wake her.
+
+What a holder notices:
+
+Food. The first feed of the day fills her more. She still has to be fed. A larger holding fills that meal further. The gain gets smaller as the bag grows, and she can still be hungry again by evening.
+
+Crystals. A completed care action or expedition pays a bonus in crystals. A bigger bag raises that daily bonus. No play means no bonus. Crystals stay inside the game. They cannot be withdrawn or swapped for $SOUL.
+
+Energy. She refills faster, and she still cannot pass full. A bigger bag shortens the wait. It does not add a free paid entry, and it does not change the scrap.
+
+The machine. The case mark gets richer as the bag grows: a stitch, then a lamp, then more light. It is not part of her coat, and it dims if the balance falls.
+
+Talk. More lines in a day as the holding grows, still spoken from the personality she already has. This is usage of the AI, not a token.
+
+What holding must not do:
+
+Pay $SOUL, SOL, or any other token.
+
+Raise battle attributes or change who wins a pot.
+
+Change rarity, DNA, hair, or outfit.
+
+Set the awakening flag, or skip a neglected day.
+
+Turn a bigger bag into a copy of a smaller one. More tokens always move food, crystals, refill, talk, or the case mark. They never move the scrap.
+
+A one-block buy does not count. The tier uses a rolling average of the wallet balance.
+
+10.4 Holder tiers
+
+A tier system can make larger holdings progressively more valuable.
+
+Illustrative structure:
+
+Tier
+
+What changes in play
+
+None
+
+The standard day. She is whole.
+
+Jar
+
+The first meal fills a little more. A small crystal bonus on something she actually did. A thin mark on the case.
+
+Stocked
+
+The meal fills more. The crystal cap is higher. Energy refills a little faster.
+
+Pantry
+
+A full meal, a strong crystal bonus, a fast refill, and more talk. This is a named step, not a ceiling.
+
+Above the pantry
+
+The same dials keep moving. Each time the bag doubles, the meal fills a little more, the crystal bonus rises a little, the refill gets a little faster, she has a few more lines, and the case mark gets brighter. The next doubling adds less than the one before. A much larger bag is still visibly ahead of a smaller one.
+
+These steps are how the curve is explained. They are not a payout ladder, and they are not a wall. The balance that opens Jar, Stocked, and Pantry has to be set from the real $SOUL supply and who already holds it. Above the pantry the game reads the average balance directly, so two large holders are not treated as equal.
+
+The benefits are cumulative. A higher holding keeps everything a smaller one already has.
+
+10.5 Balance verification
+
+The system should avoid temporary wallet transfers solely to unlock benefits.
+
+Possible implementation:
+
+Periodic balance snapshots.
+
+A minimum holding period.
+
+A rolling average balance for tier eligibility.
+
+Clear tier downgrade rules.
+
+Server-side verification.
+
+The exact holding-period rules need to be decided before implementation.
+
+The creature's identity and NFT ownership should remain separate from holder eligibility. If ownership changes in a future system, holder benefits should be recalculated according to the new eligible wallet.
+
+11. Business Model and Revenue
+
+CRITTERS needs to generate enough revenue to cover hosting, AI inference, development, maintenance, marketing and future content.
+
+The game should be free to start and enjoyable without paying.
+
+Revenue should come from optional premium services and content.
+
+Importantly, $SOUL holdings are not project revenue. A user buying tokens on a secondary market does not automatically generate revenue for CRITTERS. Holder perks are delivered inside the game. They are never a token emission, because the project does not hold a supply to emit.
+
+11.1 Paid battle fee
+
+The first revenue is the percentage taken from a paid battle pot.
+
+Players fund the pot. The winner receives the rest. CRITTERS receives only the published percentage, taken when the match settles.
+
+That fee is not a yield, and it is not paid in $SOUL. It is a cut of SOL the two players chose to lock.
+
+The free table does not generate this fee. A creature that cannot legally be entered does not lock SOL.
+
+11.2 Premium AI subscription
+
+This is potentially one of the strongest recurring revenue sources.
+
+The standard creature experience remains available for free.
+
+A premium subscription can provide:
+
+More AI conversations.
+
+Extended memory.
+
+More advanced personality responses.
+
+Longer conversations.
+
+Voice interaction.
+
+Additional autonomous behaviour.
+
+More detailed journal entries.
+
+The subscription pays for additional AI infrastructure and usage.
+
+Holder tiers can include selected AI privileges, but the subscription can provide additional usage beyond those benefits.
+
+11.3 Premium expeditions
+
+Optional premium expeditions can introduce:
+
+Additional challenges.
+
+Special content.
+
+Longer missions.
+
+Unique gameplay experiences.
+
+Exclusive achievements.
+
+They should not provide a direct route to awakening or guaranteed superior combat attributes.
+
+11.4 Marketplace
+
+The marketplace should focus on tradable game items and collectibles.
+
+Potential items include:
+
+Expedition discoveries.
+
+Collectible items.
+
+Resources.
+
+Special equipment or gameplay items, where appropriate.
+
+Other eligible game collectibles.
+
+CRITTERS can collect a small fee from secondary transactions.
+
+The creature itself remains soulbound at launch.
+
+There is no need for a complicated machine equipment economy.
+
+11.5 Premium events
+
+Special events can generate revenue through optional entry fees or event access.
+
+Examples:
+
+Seasonal championships.
+
+Special Arena events.
+
+Limited-time expedition challenges.
+
+Special community competitions.
+
+Any paid competition with monetary prizes needs legal review in the jurisdictions where it is offered.
+
+11.6 Premium game content
+
+Additional content can be introduced over time:
+
+New expedition environments.
+
+Special challenges.
+
+New story events.
+
+Expanded activities.
+
+Additional species.
+
+More advanced AI experiences.
+
+The goal is to create ongoing content that gives players reasons to return.
+
+11.7 Revenue priorities
+
+The initial business priorities should be:
+
+The percentage of paid battle pots.
+
+Premium AI subscription.
+
+Premium expedition content.
+
+Marketplace commissions.
+
+Optional premium events.
+
+Additional premium game content.
+
+The goal is to build recurring revenue rather than depend entirely on one-time sales.
+
+12. Blockchain and Ownership
+
+Web3 should support the experience rather than dominate it.
+
+The player should be able to interact with the game without constantly thinking about transactions.
+
+12.1 Creature ownership
+
+At launch:
+
+One wallet can hatch one creature.
+
+Each creature has one unique identity.
+
+The creature is represented by a soulbound NFT.
+
+The NFT cannot initially be transferred.
+
+The original DNA remains associated with the creature.
+
+Awakening updates the existing identity rather than creating a new NFT.
+
+12.2 On-chain data
+
+The proposed architecture stores:
+
+Hatch record.
+
+Creature identity reference.
+
+Awakening flag.
+
+Relevant ownership information.
+
+The full visual data does not need to be stored on-chain if it can be deterministically reconstructed from the seed.
+
+12.3 Off-chain data
+
+The following can be handled by the game backend:
+
+Personality details.
+
+Conversations.
+
+Memory.
+
+Hunger.
+
+Mood.
+
+Trust.
+
+Journal.
+
+Animations.
+
+Mission history.
+
+Daily behaviour.
+
+The blockchain stores ownership and important milestones, while the backend manages the living game.
+
+12.4 Chain selection
+
+The original technical proposal mentions an EVM chain for creature ownership, while the wider concept has also referenced Solana for battles and the existing Pump.fun token.
+
+This is not yet a final architecture decision.
+
+We need to select the primary chain and decide whether cross-chain functionality is genuinely necessary.
+
+Avoid introducing multiple chains before the core game works.
+
+13. Website and User Experience
+
+The website should feel like a game, not a crypto dashboard.
+
+The creature should be the centre of the experience.
+
+Proposed navigation:
+
+Section
+
+Purpose
+
+Discover
+
+Explore creatures and the community
+
+Hatch
+
+Create a new creature
+
+My Creature
+
+Main companion screen
+
+Arena
+
+Creature battles and rankings
+
+Exploration
+
+Expeditions and discoveries
+
+Journal
+
+Creature memories and history
+
+Leaderboard
+
+Rankings and achievements
+
+Marketplace
+
+Eligible collectibles and items
+
+Profile
+
+Wallet, holder tier and account
+
+13.1 Main creature screen
+
+This is the most important screen.
+
+It should display:
+
+Animated creature.
+
+Name.
+
+Current mood.
+
+Hunger and energy.
+
+Current activity.
+
+Dialogue.
+
+Care interactions.
+
+Room environment.
+
+Journal access.
+
+The interface should feel like looking into a small living world.
+
+The machine/glass presentation from the original concept should remain a central design direction.
+
+13.2 Creature life card
+
+Every creature should have a detailed profile containing:
+
+Original appearance.
+
+Current life stage.
+
+Rarity.
+
+Personality.
+
+Attributes.
+
+Hatch date.
+
+Awakening date.
+
+Care history.
+
+Journal.
+
+Achievements.
+
+Battle records.
+
+Expedition history.
+
+The cat remains visible in its history even after awakening.
+
+14. Technical Architecture
+
+The existing Game engine and assets should be examined before rebuilding anything.
+
+The project already references:
+
+makeDna(visualSeed)
+
+lifeSeed
+
+visualFor
+
+awakenedLook(dna)
+
+Cat sprite assets.
+
+Lily sprite assets.
+
+Existing game mechanics.
+
+The implementation should build on these components where possible.
+
+14.1 Frontend
+
+Suggested stack:
+
+Next.js.
+
+React.
+
+TypeScript.
+
+React Three Fiber or Three.js for the machine environment.
+
+Pixel-art sprite animation system.
+
+WebSocket support for live interactions.
+
+The game should load quickly and remain responsive.
+
+14.2 Game engine
+
+The game engine should own all deterministic gameplay rules.
+
+It should control:
+
+DNA generation.
+
+Personality.
+
+Creature needs.
+
+Energy.
+
+Mood.
+
+Training.
+
+Expeditions.
+
+Battles.
+
+Rewards.
+
+Awakening eligibility.
+
+The AI must not be allowed to directly change important game states.
+
+14.3 AI architecture
+
+Use a hybrid system.
+
+Deterministic behaviour:
+
+Hunger.
+
+Energy.
+
+Mood.
+
+Routine.
+
+Animation selection.
+
+Basic reactions.
+
+Game calculations.
+
+AI-generated behaviour:
+
+Conversations.
+
+Meaningful reactions.
+
+Memory summaries.
+
+Special events.
+
+Personality-driven dialogue.
+
+Detailed journal descriptions.
+
+This reduces AI costs while maintaining the impression of a living creature.
+
+14.4 Backend
+
+Suggested infrastructure:
+
+PostgreSQL for persistent game data.
+
+Redis for caching and queues.
+
+Background workers for daily updates.
+
+AI service integration.
+
+WebSocket server.
+
+Blockchain RPC provider.
+
+Blockchain indexer.
+
+Holder verification service.
+
+The backend should be designed to support many creatures without requiring expensive AI calls for every routine action.
+
+14.5 Blockchain verification
+
+The holder verification service should read the official $SOUL token mint and calculate wallet balances.
+
+It should be independent of the AI and game engine.
+
+The game should never trust a balance supplied by the frontend.
+
+14.6 Security
+
+Important protections:
+
+Server-side game validation.
+
+Secure wallet authentication.
+
+Anti-bot and anti-abuse systems.
+
+Rate limiting.
+
+Secure NFT ownership verification.
+
+Protection against duplicate rewards.
+
+Battle result verification.
+
+Secure AI integration.
+
+Separation between AI output and game execution.
+
+The AI must never have unrestricted access to user wallets or smart contracts.
+
+15. Development Roadmap
+
+The project should be built in stages.
+
+The biggest mistake would be attempting to launch every feature at once.
+
+Phase 1 — The Living Creature MVP
+
+Primary objective: Make people care about their creature.
+
+Features:
+
+Wallet connection.
+
+One creature per wallet.
+
+Deterministic DNA.
+
+Rarity.
+
+Personality generation.
+
+Animated cat.
+
+Machine/glass interface.
+
+Hunger and energy.
+
+Feeding and care.
+
+AI conversations.
+
+Basic memory.
+
+Journal.
+
+Creature profile.
+
+$SOUL holder verification.
+
+Initial holder benefits.
+
+At the end of this phase, a player should be able to hatch a cat, interact with it, develop its personality and return to see how it is doing.
+
+Phase 2 — Creature Progression
+
+Features:
+
+Training.
+
+Expanded care system.
+
+Trust and cared-for days.
+
+More AI behaviour.
+
+More journal events.
+
+Expeditions.
+
+Exploration.
+
+Resting.
+
+Holder-based autonomy.
+
+This phase makes the creature's life deeper.
+
+Phase 3 — Awakening
+
+Features:
+
+Awakening eligibility engine.
+
+Lily sprite integration.
+
+DNA-to-awakened appearance mapping.
+
+Awakening animation.
+
+Persistent identity.
+
+Updated life card.
+
+Awakening history.
+
+This is one of the main product milestones and should receive significant attention.
+
+Phase 4 — Arena
+
+Features:
+
+Battle engine.
+
+Free 1v1 battles.
+
+Paid 1v1 battles. Both sides lock SOL. The winner takes the pot after a published percentage.
+
+Rankings.
+
+Achievements.
+
+Battle history.
+
+AI commentary.
+
+King of the Arena.
+
+Seasonal competitions.
+
+The Arena should be built around the same creature attributes and personality system already used throughout the game.
+
+Phase 5 — Exploration and Economy
+
+Features:
+
+Expanded expeditions.
+
+Expedition rewards.
+
+Collectible items.
+
+Marketplace.
+
+Premium AI subscription.
+
+Premium expedition content.
+
+Optional premium events.
+
+Additional game content.
+
+Phase 6 — Long-term Expansion
+
+Potential future features:
+
+Additional creature species.
+
+More expedition environments.
+
+New Arena competitions.
+
+Expanded AI capabilities.
+
+Breeding, if justified by player demand.
+
+Additional blockchain functionality.
+
+16. Core Design Rules
+
+These rules should guide every future development decision.
+
+A creature's identity is permanent.
+
+One wallet, one hatch, one roll. The same wallet cannot hatch again for a better rarity. Hatch does not spend AI.
+
+A generated wallet is not a hatch. The hatch is stored only after that wallet's signed transaction confirms. The bot pays the network. Mass minting does not create model calls, image files, or a sellable legendary.
+
+DNA determines its appearance.
+
+AI does not change DNA or personality.
+
+The cat and awakened girl are the same soul.
+
+Awakening cannot be purchased.
+
+Awakening does not improve combat stats.
+
+Rarity does not determine whether awakening is possible.
+
+$SOUL is not an in-game currency.
+
+$SOUL holdings unlock in-game privileges that keep growing with the bag: a fuller meal, more crystals from play, a faster refill, a richer case mark, and more lines of talk. The growth slows as the bag gets larger. It does not stop.
+
+Holding benefits are never paid in $SOUL, SOL, or any other token. The project does not control supply.
+
+Holding benefits cannot modify creature appearance.
+
+Holding benefits should not create direct combat-stat advantages, and they do not change who takes a pot.
+
+Paid battles pay the winner the pot minus one published percentage. That percentage is the fee.
+
+Free gameplay must remain meaningful.
+
+AI must never determine battle outcomes.
+
+AI must never directly execute financial transactions.
+
+Creature-to-creature relationships are not part of the game.
+
+Gameplay rules must be deterministic and server-validated.
+
+Revenue must come from sustainable products and services, not artificial token rewards.
+
+All gameplay should support Companion, Arena or Exploration.
+
+New features should not introduce separate games without a compelling reason.
+
+17. Important Decisions Still to Make
+
+Area
+
+Decision required
+
+Blockchain
+
+Select the primary chain for creature ownership
+
+NFT
+
+Finalise soulbound implementation
+
+$SOUL
+
+Confirm token mint and actual holder thresholds
+
+Holder benefits
+
+Finalise tier levels and exact benefits
+
+AI
+
+Decide free usage limits and subscription pricing
+
+Care
+
+Finalise daily needs and progression calculations
+
+Awakening
+
+Define exact eligibility formula
+
+Arena
+
+The scrap math and the 5% pot fee are in the engine. What is still open is legal review before a table pays SOL.
+
+Exploration
+
+Design expedition types and reward balancing
+
+Revenue
+
+Finalise subscription pricing and marketplace fees
+
+Economy
+
+Finalise gameplay resources and reward limits
+
+Transferability
+
+Decide whether creatures will ever become transferable
+
+18. Overall Vision
+
+CRITTERS should become an AI-powered creature ecosystem where every creature has a unique identity and a persistent life.
+
+The player doesn't simply own an image.
+
+They hatch a creature, give it a name, learn its personality, care for it, watch it grow, build its history and eventually witness its awakening.
+
+They can take it into battles, send it on expeditions, train it and compete with other players.
+
+The creature should remain recognisable throughout its entire life.
+
+The blockchain provides ownership. AI provides personality and interaction. The game engine provides progression and rules. The $SOUL token provides additional holder privileges. The business model provides the resources to keep developing the world.
+
+The central product is the living creature. Everything else exists to make its life more interesting.
+
+CRITTERS should first succeed at making people care about their creature. Once that emotional attachment exists, the Arena and Exploration systems give players reasons to stay, while premium AI and optional content give the business sustainable ways to earn revenue.
