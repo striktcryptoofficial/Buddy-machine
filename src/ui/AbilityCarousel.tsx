@@ -194,6 +194,8 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     const viewport = listRef.current
     const track = trackRef.current
     if (!viewport || !track) return
+    const scroller = viewport
+    const row = track
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let x = 0
     let target = 0
@@ -206,13 +208,13 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     let raf = 0
 
     function maxSlide() {
-      return Math.max(0, track.scrollWidth - viewport.clientWidth)
+      return Math.max(0, row.scrollWidth - scroller.clientWidth)
     }
     function clamp(next: number) {
       return Math.max(-maxSlide(), Math.min(0, next))
     }
     function paint() {
-      track.style.transform = `translate3d(${x}px,0,0)`
+      row.style.transform = `translate3d(${x}px,0,0)`
     }
     function kick() {
       if (raf || reduce) return
@@ -242,7 +244,7 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
       vel = 0
       lastPointer = event.clientX
       lastTime = performance.now()
-      viewport.setPointerCapture(event.pointerId)
+      scroller.setPointerCapture(event.pointerId)
       kick()
     }
     function move(event: PointerEvent) {
@@ -262,7 +264,7 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     function up(event: PointerEvent) {
       if (!dragging) return
       dragging = false
-      if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId)
+      if (scroller.hasPointerCapture(event.pointerId)) scroller.releasePointerCapture(event.pointerId)
       if (reduce) {
         x = target
         paint()
@@ -274,7 +276,7 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
       event.preventDefault()
       let delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
       if (event.deltaMode === 1) delta *= 40
-      else if (event.deltaMode === 2) delta *= viewport.clientWidth
+      else if (event.deltaMode === 2) delta *= scroller.clientWidth
       if (!delta) return
       target = clamp(target - delta)
       vel = Math.max(-42, Math.min(42, vel * 0.5 - delta * 0.018))
@@ -288,18 +290,18 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     }
 
     paint()
-    viewport.addEventListener('pointerdown', down)
-    viewport.addEventListener('pointermove', move)
-    viewport.addEventListener('pointerup', up)
-    viewport.addEventListener('pointercancel', up)
-    viewport.addEventListener('wheel', wheel, { passive: false })
+    scroller.addEventListener('pointerdown', down)
+    scroller.addEventListener('pointermove', move)
+    scroller.addEventListener('pointerup', up)
+    scroller.addEventListener('pointercancel', up)
+    scroller.addEventListener('wheel', wheel, { passive: false })
     return () => {
       if (raf) cancelAnimationFrame(raf)
-      viewport.removeEventListener('pointerdown', down)
-      viewport.removeEventListener('pointermove', move)
-      viewport.removeEventListener('pointerup', up)
-      viewport.removeEventListener('pointercancel', up)
-      viewport.removeEventListener('wheel', wheel)
+      scroller.removeEventListener('pointerdown', down)
+      scroller.removeEventListener('pointermove', move)
+      scroller.removeEventListener('pointerup', up)
+      scroller.removeEventListener('pointercancel', up)
+      scroller.removeEventListener('wheel', wheel)
     }
   }, [kind, cards.length])
 
