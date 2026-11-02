@@ -6,14 +6,30 @@ import { awakenedLook } from '../../mechanics/awakenedLook'
 import { loadImage } from '../cat/coat'
 import { paintLily, lilyPaintRev } from './paint'
 
-type FrameAsset = string | { src: string }
+function frameSrc(file: unknown): string | undefined {
+  if (typeof file === 'string') return file
+  if (!file || typeof file !== 'object') return
+  const record = file as Record<string, unknown>
+  if (typeof record.src === 'string') return record.src
+  const nested = record.default
+  if (nested && nested !== file) {
+    const fromDefault = frameSrc(nested)
+    if (fromDefault) return fromDefault
+  }
+  for (const value of Object.values(record)) {
+    if (!value || typeof value !== 'object' || value === file) continue
+    const src = (value as { src?: unknown }).src
+    if (typeof src === 'string') return src
+  }
+}
 
-const files = import.meta.glob('../../assets/lily/**/*.png', { eager: true, import: 'default' }) as Record<string, FrameAsset>
+const files = import.meta.glob('../../assets/lily/**/*.png', { eager: true }) as Record<string, unknown>
 
 const urlByPath = new Map<string, string>()
-for (const [key, url] of Object.entries(files)) {
+for (const [key, file] of Object.entries(files)) {
   const rel = key.split('/assets/lily/')[1]
-  if (rel) urlByPath.set(rel, typeof url === 'string' ? url : url.src)
+  const src = frameSrc(file)
+  if (rel && src) urlByPath.set(rel, src)
 }
 
 function frameUrl(rel: string) {

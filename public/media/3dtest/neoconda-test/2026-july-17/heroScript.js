@@ -1631,6 +1631,160 @@ const HERO_MODEL_REVEAL_HANDOFF_LEAD_SECONDS = 1.15;
     });
   }
 
+  REQUIRED_PROGRESS_TASKS.push({ key: "page:landing", weight: 10 });
+
+  const trackPageAssets = () => {
+    const settle = (work) =>
+      new Promise((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        setTimeout(finish, 12000);
+        Promise.resolve()
+          .then(work)
+          .then(finish, finish);
+      });
+
+    const imageUrl = (img) => {
+      if (img.currentSrc) return img.currentSrc;
+      const srcset = img.getAttribute("srcset") || "";
+      const largest = srcset
+        .split(",")
+        .map((part) => part.trim().split(/\s+/)[0])
+        .filter(Boolean)
+        .pop();
+      return largest || img.src || "";
+    };
+
+    const urls = new Set();
+    Array.from(document.images).forEach((img) => {
+      img.loading = "eager";
+      const url = imageUrl(img);
+      if (url) urls.add(url);
+    });
+    Array.from(document.querySelectorAll("video[src]")).forEach((video) => {
+      if (video.currentSrc || video.src) urls.add(`video:${video.currentSrc || video.src}`);
+    });
+
+    const jobs = [];
+    jobs.push(
+      settle(() =>
+        document.fonts
+          ? Promise.all([
+              document.fonts.ready,
+              document.fonts.load("700 64px Silkscreen"),
+              document.fonts.load("500 16px Geist"),
+              document.fonts.load("24px PixelOperator"),
+            ])
+          : Promise.resolve(),
+      ),
+    );
+    jobs.push(
+      settle(
+        () =>
+          new Promise((resolve) => {
+            if (document.readyState === "complete") resolve();
+            else window.addEventListener("load", () => resolve(), { once: true });
+          }),
+      ),
+    );
+    urls.forEach((url) => {
+      if (url.startsWith("video:")) {
+        const src = url.slice(6);
+        const video = Array.from(document.querySelectorAll("video")).find(
+          (node) => (node.currentSrc || node.src) === src,
+        );
+        if (!video) return;
+        jobs.push(
+          settle(
+            () =>
+              new Promise((resolve) => {
+                if (video.readyState >= 2) return resolve();
+                video.preload = "auto";
+                video.addEventListener("loadeddata", () => resolve(), { once: true });
+                video.addEventListener("error", () => resolve(), { once: true });
+                try {
+                  video.load();
+                } catch (error) {}
+              }),
+          ),
+        );
+        return;
+      }
+      jobs.push(
+        settle(
+          () =>
+            new Promise((resolve) => {
+              const probe = new Image();
+              probe.onload = () => resolve();
+              probe.onerror = () => resolve();
+              probe.src = url;
+            }),
+        ),
+      );
+    });
+
+    const frame = document.querySelector("iframe.hero-scene");
+    if (frame) {
+      jobs.push(
+        settle(
+          () =>
+            new Promise((resolve) => {
+              let finished = false;
+              const finish = () => {
+                if (finished) return;
+                finished = true;
+                resolve();
+              };
+              const sceneReady = () => {
+                try {
+                  const canvas = frame.contentDocument?.querySelector("canvas.webgl-canvas");
+                  return !!(canvas && canvas.width > 0 && canvas.height > 0);
+                } catch (error) {
+                  return true;
+                }
+              };
+              const watch = () => {
+                if (sceneReady()) {
+                  finish();
+                  return;
+                }
+                let tries = 0;
+                const timer = setInterval(() => {
+                  tries += 1;
+                  if (sceneReady() || tries > 80) {
+                    clearInterval(timer);
+                    finish();
+                  }
+                }, 100);
+              };
+              try {
+                if (frame.contentDocument?.readyState === "complete") watch();
+                else frame.addEventListener("load", watch, { once: true });
+              } catch (error) {
+                frame.addEventListener("load", finish, { once: true });
+              }
+            }),
+        ),
+      );
+    }
+
+    const total = Math.max(jobs.length, 1);
+    let done = 0;
+    loadRegistry.setTaskProgress("page:landing", 0);
+    jobs.forEach((job) => {
+      job.then(() => {
+        done += 1;
+        loadRegistry.setTaskProgress("page:landing", done / total);
+      });
+    });
+  };
+
+  trackPageAssets();
+
   const areRequiredAssetsReady = () =>
     REQUIRED_PROGRESS_TASKS.every(
       ({ key }) => loadRegistry.getTaskProgress(key) >= 1,
