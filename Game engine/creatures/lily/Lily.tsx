@@ -6,12 +6,14 @@ import { awakenedLook } from '../../mechanics/awakenedLook'
 import { loadImage } from '../cat/coat'
 import { paintLily, lilyPaintRev } from './paint'
 
-const files = import.meta.glob('../../assets/lily/**/*.png', { eager: true, import: 'default' }) as Record<string, string>
+type FrameAsset = string | { src: string }
+
+const files = import.meta.glob('../../assets/lily/**/*.png', { eager: true, import: 'default' }) as Record<string, FrameAsset>
 
 const urlByPath = new Map<string, string>()
 for (const [key, url] of Object.entries(files)) {
   const rel = key.split('/assets/lily/')[1]
-  if (rel) urlByPath.set(rel, url)
+  if (rel) urlByPath.set(rel, typeof url === 'string' ? url : url.src)
 }
 
 function frameUrl(rel: string) {

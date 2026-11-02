@@ -1,0 +1,13 @@
+import fs from "fs";
+const file = "c:/Users/STRIKT/Desktop/test 3d/public/_nuxt/CfE0pqJa.js";
+let s = fs.readFileSync(file, "utf8");
+const hook = "window.__homeCats={middle:this.ponpon,grey:this.jeanLoup,right:this.simon}}";
+const method = `createSvgCats(){const frag="uniform sampler2D tMap;varying vec2 vUv;void main(){gl_FragColor=texture2D(tMap,vUv);}";const spots=[{src:"/cat4.svg",x:-2.85,y:-.55,z:-.4,s:1.45},{src:"/cat5.svg",x:-.85,y:-.15,z:-.8,s:1.35},{src:"/cat6.svg",x:.7,y:-.2,z:-.9,s:1.4},{src:"/cat7.svg",x:2.45,y:-.7,z:.2,s:1.7}];this.extraCats=spots.map(n=>{const blank=document.createElement("canvas");blank.width=2,blank.height=2;const image=new Image,texture=new Ah(this.gl,{image:blank,generateMipmaps:!1,minFilter:this.gl.LINEAR,magFilter:this.gl.LINEAR});image.onload=()=>{texture.image=image,texture.needsUpdate=!0},image.src=n.src;const program=this.createProgram({fragment:frag,uniforms:{tMap:{value:texture}},params:{transparent:!0}}),mesh=new De(this.world,{geometry:this.world.geoms.plane,program});return mesh.mesh.scale.set(n.s,n.s,1),mesh.mesh.position.set(n.x,n.y,n.z),mesh.sync(!0),this.group.addChild(mesh.mesh),mesh.mesh})}`;
+const hookNext = "window.__homeCats={middle:this.ponpon,grey:this.jeanLoup,right:this.simon},this.createSvgCats()}" + method;
+const cats = "const cats=[this.ponpon.mesh.mesh,this.simon.group,this.jeanLoup.group]";
+const catsNext = "const cats=[this.ponpon.mesh.mesh,this.simon.group,this.jeanLoup.group].concat(this.extraCats||[])";
+if (s.split(hook).length - 1 !== 1) throw new Error("hook");
+if (s.split(cats).length - 1 !== 1) throw new Error("cats");
+s = s.replace(hook, hookNext).replace(cats, catsNext);
+fs.writeFileSync(file, s);
+console.log("added");

@@ -87,7 +87,7 @@ const PX = GLASS.w / GLASS.pxW
 const SCREEN_R = 52 * PX
 const BODY = { w: 500, h: 1020, d: 78, r: SCREEN_R }
 const GLASS_Y = 164
-const READ_Y = -230
+const READ_Y = -248
 const KEY_Y = -390
 
 type Keypad = {
@@ -1293,6 +1293,7 @@ const STICKER = { w: 188, h: 268 }
 
 const CARD_SANS = '"Segoe UI", system-ui, sans-serif'
 const CARD_SERIF = 'Georgia, "Palatino Linotype", "Times New Roman", serif'
+const CARD_TITLE = '"PixelOperator", ui-monospace, monospace'
 const CARD_INK = '#f4efe6'
 const CARD_STONE = '#d2c8bb'
 const CARD_MUTE = '#9a9186'
@@ -1513,31 +1514,27 @@ function makeBackSticker() {
       pen.stroke()
     }
 
-    const sealY = 536
+    const sealY = 478
+    const sealW = 360
+    const sealH = 64
     pen.save()
+    pen.shadowColor = 'transparent'
+    pen.shadowBlur = 0
     pen.beginPath()
-    pen.ellipse(cx, sealY, 112, 86, 0, 0, Math.PI * 2)
-    pen.fillStyle = mixHex(ground, foil, 0.1)
+    pen.roundRect(cx - sealW / 2, sealY - sealH / 2, sealW, sealH, 18)
+    pen.fillStyle = '#ffffff'
     pen.fill()
-    pen.lineWidth = 2
-    pen.strokeStyle = mixHex(foil, '#ffffff', 0.4)
-    pen.stroke()
-    pen.beginPath()
-    pen.ellipse(cx, sealY, 100, 74, 0, 0, Math.PI * 2)
-    pen.strokeStyle = foil
-    pen.globalAlpha = 0.8
-    pen.stroke()
     pen.restore()
 
     write('LIFE CERTIFICATE', 108, `600 20px ${CARD_SANS}`, CARD_MUTE, '0.18em')
     write('BUDDY', 150, `600 26px ${CARD_SANS}`, CARD_INK, '0.2em')
     ornament(184, 150)
 
-    let raritySize = 48
+    let raritySize = 54
     const rarityWord = rarity.toUpperCase()
     pen.letterSpacing = '0.12em'
     pen.font = `600 ${raritySize}px ${CARD_SANS}`
-    while (raritySize > 34 && pen.measureText(rarityWord).width > 520) {
+    while (raritySize > 34 && pen.measureText(rarityWord).width > 600) {
       raritySize -= 2
       pen.font = `600 ${raritySize}px ${CARD_SANS}`
     }
@@ -1546,12 +1543,12 @@ function makeBackSticker() {
     const date = issued
       .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
       .toUpperCase()
-    write(date, 312, `500 20px ${CARD_SANS}`, CARD_MUTE, '0.14em')
+    write(date, 312, `500 20px ${CARD_SANS}`, '#ffffff', '0.14em')
 
     const pipY = 356
     for (let i = 0; i < 4; i++) {
       const px = cx + (i - 1.5) * 26
-      diamond(px, pipY, 6, 7)
+      diamond(px, pipY, 8, 9)
       if (i <= tier) {
         pen.fillStyle = foil
         pen.fill()
@@ -1562,50 +1559,48 @@ function makeBackSticker() {
       }
     }
 
-    const nameRx = 84
-    const nameRy = 58
-    let nameSize = 64
+    const nameRx = sealW / 2 - 28
+    let nameSize = 56
     const nameFits = (size: number) => {
-      pen.font = `400 ${size}px ${CARD_SERIF}`
+      pen.font = `400 ${size}px ${CARD_TITLE}`
       const metrics = pen.measureText(name)
       const ascent = metrics.actualBoundingBoxAscent || size * 0.72
       const descent = metrics.actualBoundingBoxDescent || size * 0.22
-      const half = metrics.width / 2 + 6
-      const chord = (dy: number) => {
-        const t = (dy / nameRy) ** 2
-        if (t >= 1) return 0
-        return nameRx * Math.sqrt(1 - t)
-      }
-      return half <= chord(-ascent) && half <= chord(descent)
+      return metrics.width / 2 + 6 <= nameRx && ascent + descent <= sealH - 10
     }
     while (nameSize > 22 && !nameFits(nameSize)) nameSize -= 2
-    write(name, sealY, `400 ${nameSize}px ${CARD_SERIF}`, CARD_INK, '0px')
-    write(coat, 668, `italic 400 30px ${CARD_SERIF}`, CARD_STONE, '0.02em')
+    pen.save()
+    pen.shadowColor = 'transparent'
+    pen.shadowBlur = 0
+    write(name, sealY, `400 ${nameSize}px ${CARD_TITLE}`, '#111111', '0.04em')
+    pen.restore()
+    write(coat, 590, `italic 400 30px ${CARD_SERIF}`, '#ffffff', '0.02em')
 
     const detail = [titleCase(current.dna.pattern), current.dna.accessory !== 'none' ? titleCase(current.dna.accessory) : '']
       .filter(Boolean)
       .join('  ·  ')
-    write(detail, 716, `600 16px ${CARD_SANS}`, CARD_MUTE, '0.16em')
+    write(detail, 626, `600 16px ${CARD_SANS}`, '#ffffff', '0.16em')
 
     const chips = [current.dna.base, current.dna.spot, current.dna.belly, current.dna.eye, current.dna.accent]
     const chip = 26
     const chipGap = 16
     let chipX = cx - (chips.length * chip + (chips.length - 1) * chipGap) / 2
-    const chipY = 768
+    const chipY = 668
+    pen.save()
+    pen.shadowColor = 'transparent'
+    pen.shadowBlur = 0
     for (const color of chips) {
       pen.beginPath()
       pen.arc(chipX + chip / 2, chipY, chip / 2, 0, Math.PI * 2)
       pen.fillStyle = color
       pen.fill()
-      pen.lineWidth = 2
-      pen.strokeStyle = mixHex(foil, '#ffffff', 0.25)
-      pen.stroke()
       chipX += chip + chipGap
     }
+    pen.restore()
 
-    ornament(808, 220)
-    write('SERIAL', 858, `600 16px ${CARD_SANS}`, CARD_MUTE, '0.18em')
-    write(serial, 906, `500 28px ${CARD_SANS}`, CARD_INK, '0.1em')
+    ornament(710, 220)
+    write('SERIAL', 748, `600 16px ${CARD_SANS}`, '#ffffff', '0.18em')
+    write(serial, 788, `500 28px ${CARD_SANS}`, CARD_INK, '0.1em')
   }
 
   const draw = () => {
@@ -1628,6 +1623,7 @@ function makeBackSticker() {
     pen = ctx
   }
 
+  document.fonts?.load('400 56px PixelOperator').then(draw).catch(() => {})
   document.fonts?.ready.then(draw).catch(() => {})
 
   return {

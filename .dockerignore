@@ -1,6 +1,8 @@
 node_modules
 dist
+.next
 .git
+landingpage
 .env
 server/life.json
 server/caps.json

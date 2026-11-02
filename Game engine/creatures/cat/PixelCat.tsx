@@ -23,34 +23,38 @@ import { loadImage, paintCoat } from './coat'
 import type { Action, Mood } from '../../mechanics/types'
 import type { Visual } from './visual'
 
+function sheet(file: string | { src: string }) {
+  return typeof file === 'string' ? file : file.src
+}
+
 const CELL = 32
 
 const POSE = { sheetW: 512, sheetH: 800 }
 
 const SHEETS = {
-  idle: { src: idleSheet, frames: 10 },
-  idle2: { src: idle2Sheet, frames: 10 },
-  eating: { src: eatingSheet, frames: 15 },
-  excited: { src: excitedSheet, frames: 12 },
-  lay: { src: laySheet, frames: 12 },
-  dead: { src: deadSheet, frames: 1 },
-  sleep: { src: sleepSheet, frames: 4 },
-  sleepy: { src: sleepySheet, frames: 8 },
-  surprised: { src: surprisedSheet, frames: 12 },
-  waiting: { src: waitingSheet, frames: 6 },
-  dance: { src: danceSheet, frames: 4 },
-  cry: { src: crySheet, frames: 4 },
-  box1: { src: box1Sheet, frames: 4 },
-  box2: { src: box2Sheet, frames: 12 },
-  box3: { src: box3Sheet, frames: 4 },
-  shy: { src: sadSheet, frames: 9 },
-  refusing: { src: poseSheet, frames: 4, oy: 576, ...POSE },
-  despite: { src: poseSheet, frames: 13, oy: 480, ...POSE },
-  angry: { src: poseSheet, frames: 5, oy: 512, ox: 128, ...POSE },
-  licking: { src: poseSheet, frames: 11, oy: 608, ...POSE },
-  sick1: { src: sick1Sheet, frames: 5 },
-  sick2: { src: sick2Sheet, frames: 4 },
-  bath: { src: bathSheet, frames: 7, cellW: 50, cellH: 45, stride: 64, ox: 9, oy: 19, sheetW: 448, sheetH: 512 },
+  idle: { src: sheet(idleSheet), frames: 10 },
+  idle2: { src: sheet(idle2Sheet), frames: 10 },
+  eating: { src: sheet(eatingSheet), frames: 15 },
+  excited: { src: sheet(excitedSheet), frames: 12 },
+  lay: { src: sheet(laySheet), frames: 12 },
+  dead: { src: sheet(deadSheet), frames: 1 },
+  sleep: { src: sheet(sleepSheet), frames: 4 },
+  sleepy: { src: sheet(sleepySheet), frames: 8 },
+  surprised: { src: sheet(surprisedSheet), frames: 12 },
+  waiting: { src: sheet(waitingSheet), frames: 6 },
+  dance: { src: sheet(danceSheet), frames: 4 },
+  cry: { src: sheet(crySheet), frames: 4 },
+  box1: { src: sheet(box1Sheet), frames: 4 },
+  box2: { src: sheet(box2Sheet), frames: 12 },
+  box3: { src: sheet(box3Sheet), frames: 4 },
+  shy: { src: sheet(sadSheet), frames: 9 },
+  refusing: { src: sheet(poseSheet), frames: 4, oy: 576, ...POSE },
+  despite: { src: sheet(poseSheet), frames: 13, oy: 480, ...POSE },
+  angry: { src: sheet(poseSheet), frames: 5, oy: 512, ox: 128, ...POSE },
+  licking: { src: sheet(poseSheet), frames: 11, oy: 608, ...POSE },
+  sick1: { src: sheet(sick1Sheet), frames: 5 },
+  sick2: { src: sheet(sick2Sheet), frames: 4 },
+  bath: { src: sheet(bathSheet), frames: 7, cellW: 50, cellH: 45, stride: 64, ox: 9, oy: 19, sheetW: 448, sheetH: 512 },
 } as const
 
 type SheetId = keyof typeof SHEETS

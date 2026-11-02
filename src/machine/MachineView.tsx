@@ -439,7 +439,7 @@ function HatchScreen({ opening, arriving, onHatch }: { opening: boolean; arrivin
   return (
     <div className={`machine-hatch-screen ${opening ? 'is-opening' : ''} ${arriving ? 'is-arriving' : ''}`}>
       <div className="machine-hatch-flash" />
-      <div className="machine-carrier" style={{ backgroundImage: `url(${carrierSheet})` }} role="img" aria-label="Pet carrier" />
+      <div className="machine-carrier" style={{ backgroundImage: `url(${typeof carrierSheet === 'string' ? carrierSheet : carrierSheet.src})` }} role="img" aria-label="Pet carrier" />
       <p className="machine-hatch-ready">Ready to hatch</p>
       <button type="button" className="machine-hatch-go" disabled={opening} onClick={onHatch}>
         Hatch

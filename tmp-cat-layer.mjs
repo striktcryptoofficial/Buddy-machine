@@ -1,0 +1,11 @@
+import fs from "fs";
+const s = fs.readFileSync("c:/Users/STRIKT/Desktop/test 3d/public/_nuxt/CfE0pqJa.js", "utf8");
+const renderer = "new eI({canvas:e,width:e.offsetWidth,height:e.offsetHeight,dpr:this.dpr?parseFloat(this.dpr):To.DPR})";
+const rendererNext = "new eI({canvas:e,width:e.offsetWidth,height:e.offsetHeight,dpr:this.dpr?parseFloat(this.dpr):To.DPR,alpha:!0})";
+const render = "this.gl.clearColor(1,.678,.071,1),this.world.renderer.render({scene:this.group,camera:this.innerCamera})";
+const renderNext = 'this.gl.clearColor(1,.678,.071,1),(()=>{if(!this.ponpon||!this.simon||!this.jeanLoup){this.world.renderer.render({scene:this.group,camera:this.innerCamera});return}const cats=[this.ponpon.mesh.mesh,this.simon.group,this.jeanLoup.group],kids=this.group.children;cats.forEach(c=>c.visible=!1),this.world.renderer.render({scene:this.group,camera:this.innerCamera,target:this.sceneTarget}),kids.forEach(c=>c.visible=!1),cats.forEach(c=>c.visible=!0),this.gl.clearColor(0,0,0,0),this.world.renderer.render({scene:this.group,camera:this.innerCamera});const overlay=window.parent&&window.parent.document.getElementById("home-cats");if(overlay){const ctx=overlay.__ctx||(overlay.__ctx=overlay.getContext("2d",{alpha:!0})),w=this.gl.canvas.width,h=this.gl.canvas.height;if(overlay.width!==w||overlay.height!==h)overlay.width=w,overlay.height=h;ctx.clearRect(0,0,w,h),ctx.drawImage(this.gl.canvas,0,0,w,h)}const rt=this.sceneTarget,gl=this.gl;gl.bindFramebuffer(gl.READ_FRAMEBUFFER,rt.buffer),gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,null),gl.blitFramebuffer(0,0,rt.width,rt.height,0,0,gl.canvas.width,gl.canvas.height,gl.COLOR_BUFFER_BIT,gl.NEAREST),gl.bindFramebuffer(gl.FRAMEBUFFER,null),kids.forEach(c=>c.visible=!0)})()';
+if (s.split(renderer).length - 1 !== 1) throw new Error("renderer");
+if (s.split(render).length - 1 !== 1) throw new Error("render");
+const next = s.replace(renderer, rendererNext).replace(render, renderNext);
+fs.writeFileSync("c:/Users/STRIKT/Desktop/test 3d/public/_nuxt/CfE0pqJa.js", next);
+console.log("patched");
