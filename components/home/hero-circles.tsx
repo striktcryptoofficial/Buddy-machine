@@ -616,7 +616,8 @@ export function HeroCircles() {
       const introRaw = revealAt > 0 ? Math.min(1, (now - revealAt) / 2200) : 0;
       const intro = reducedMotion ? 1 : introRaw * introRaw * (3 - 2 * introRaw);
       if (showArch && arch && sceneTex && stage) {
-        const engine = asCanvas(parent.querySelector("iframe.hero-scene")?.contentDocument?.querySelector("canvas.webgl-canvas") ?? null);
+        const sceneFrame = parent.querySelector<HTMLIFrameElement>("iframe.hero-scene");
+        const engine = asCanvas(sceneFrame?.contentDocument?.querySelector("canvas.webgl-canvas") ?? null);
         const catCanvas = asCanvas(document.getElementById("home-cats"));
         if (catCanvas && !pictureReady) catCanvas.style.opacity = "1";
         gl.getError();
@@ -734,14 +735,15 @@ export function HeroCircles() {
       const frame = parent.querySelector<HTMLIFrameElement>("iframe.hero-scene");
       const body = frame?.contentDocument?.body;
       const view = frame?.contentWindow;
-      if (!frame || !body || !view) return;
+      const Mouse = (view as (Window & { MouseEvent: typeof MouseEvent }) | null | undefined)?.MouseEvent;
+      if (!frame || !body || !view || !Mouse) return;
       const rect = frame.getBoundingClientRect();
       const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
       if (!inside) {
-        body.dispatchEvent(new view.MouseEvent("mouseleave", { bubbles: true, view }));
+        body.dispatchEvent(new Mouse("mouseleave", { bubbles: true, view }));
         return;
       }
-      body.dispatchEvent(new view.MouseEvent("mousemove", {
+      body.dispatchEvent(new Mouse("mousemove", {
         bubbles: true,
         view,
         clientX: event.clientX - rect.left,
