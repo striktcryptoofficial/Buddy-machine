@@ -549,15 +549,8 @@ export function HeroCircles() {
       pointer.y = my;
     };
 
-    let warmed = false;
+    let warmFrames = 0;
     const draw = (now: number) => {
-      if (document.getElementById("preloader")) {
-        if (warmed) {
-          frame = window.requestAnimationFrame(draw);
-          return;
-        }
-        warmed = true;
-      }
       fit();
       ensureScene();
       const showArch = true;
@@ -670,6 +663,10 @@ export function HeroCircles() {
         gl.uniform3f(uniform(arch, "uBackgroundColor"), 126 / 255, 126 / 255, 1);
         gl.uniform3f(uniform(arch, "uOutlineColor"), 229 / 255, 181 / 255, 140 / 255);
         drawTo(arch, null);
+        if (pictureReady) warmFrames += 1;
+        if (warmFrames >= 4) {
+          (window as Window & { __heroSceneReady?: boolean }).__heroSceneReady = true;
+        }
       }
       if (nameProg && fontReady && paintedW === width) {
         const reduced = reducedMotion;

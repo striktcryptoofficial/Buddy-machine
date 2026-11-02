@@ -1727,50 +1727,74 @@ const HERO_MODEL_REVEAL_HANDOFF_LEAD_SECONDS = 1.15;
       );
     });
 
-    const frame = document.querySelector("iframe.hero-scene");
-    if (frame) {
-      jobs.push(
-        settle(
-          () =>
-            new Promise((resolve) => {
-              let finished = false;
-              const finish = () => {
-                if (finished) return;
-                finished = true;
-                resolve();
-              };
-              const sceneReady = () => {
-                try {
-                  const canvas = frame.contentDocument?.querySelector("canvas.webgl-canvas");
-                  return !!(canvas && canvas.width > 0 && canvas.height > 0);
-                } catch (error) {
-                  return true;
-                }
-              };
-              const watch = () => {
-                if (sceneReady()) {
-                  finish();
-                  return;
-                }
-                let tries = 0;
-                const timer = setInterval(() => {
-                  tries += 1;
-                  if (sceneReady() || tries > 80) {
-                    clearInterval(timer);
-                    finish();
-                  }
-                }, 100);
-              };
-              try {
-                if (frame.contentDocument?.readyState === "complete") watch();
-                else frame.addEventListener("load", watch, { once: true });
-              } catch (error) {
-                frame.addEventListener("load", finish, { once: true });
-              }
-            }),
-        ),
+    const warmCanvas = document.createElement("canvas");
+    const warmGl = warmCanvas.getContext("webgl2") || warmCanvas.getContext("webgl");
+    const warmExt = (name) => !!(warmGl && warmGl.getExtension(name));
+    const warmCompress =
+      warmExt("WEBGL_compressed_texture_astc") ||
+      warmExt("WEBGL_compressed_texture_etc") ||
+      warmExt("WEBGL_compressed_texture_etc1") ||
+      warmExt("WEBGL_compressed_texture_s3tc") ||
+      warmExt("EXT_texture_compression_s3tc") ||
+      warmExt("EXT_texture_compression_bptc") ||
+      warmExt("WEBGL_compressed_texture_pvrtc") ||
+      warmExt("WEBKIT_WEBGL_compressed_texture_pvrtc");
+    const warmLose = warmGl && warmGl.getExtension("WEBGL_lose_context");
+    if (warmLose) warmLose.loseContext();
+    const warmSmall = Math.min(window.innerWidth, window.innerHeight) < 770;
+    const warmBust = "?v=v66";
+    const warmUrls = ["home-ponpon", "home-jl-sprite", "home-simon"].map(
+      (name) => `/textures/home/${name}.png${warmBust}`,
+    );
+    [
+      ["ponpon-mask", true],
+      ["balloon-sprite", true],
+      ["home-moon", true],
+      ["home-city", true],
+      ["ponpon-plateform", true],
+      ["home-woofers", true],
+      ["night-star", true],
+      ["night-firefly", true],
+      ["loop-sky-top", false],
+      ["loop-sky-bottom", false],
+      ["home-veggies", false],
+      ["home-ponpon-eyes", false],
+    ].forEach(([name, allowSmall]) => {
+      if (warmCompress) {
+        const file = warmSmall && allowSmall ? `${name}-small.basis` : `${name}.basis`;
+        warmUrls.push(`/textures/home/ktx/${file}${warmBust}`);
+      } else {
+        warmUrls.push(`/textures/home/${name}.webp${warmBust}`);
+      }
+    });
+    if (warmCompress) {
+      warmUrls.push(
+        `/textures/common/ktx/stickers.basis${warmBust}`,
+        `/textures/common/ktx/plastic-normal-map.basis${warmBust}`,
+        `/textures/common/ktx/paper-normals.basis${warmBust}`,
       );
     }
+    warmUrls.forEach((url) => {
+      jobs.push(
+        settle(
+          () => fetch(url, { cache: "force-cache", credentials: "same-origin" }).then(() => {}, () => {}),
+        ),
+      );
+    });
+
+    jobs.push(
+      new Promise((resolve) => {
+        const started = performance.now();
+        const tick = () => {
+          if (window.__heroSceneReady || performance.now() - started > 28000) {
+            resolve();
+            return;
+          }
+          window.requestAnimationFrame(tick);
+        };
+        tick();
+      }),
+    );
 
     const total = Math.max(jobs.length, 1);
     let done = 0;
