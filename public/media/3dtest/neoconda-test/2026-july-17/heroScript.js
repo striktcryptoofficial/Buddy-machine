@@ -2812,7 +2812,7 @@ const HERO_MODEL_REVEAL_HANDOFF_LEAD_SECONDS = 1.15;
       });
     };
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const SETTLE_MS = 3200;
+    const SETTLE_MS = 350;
     const preloaderCovering = () => {
       const nodes = document.querySelectorAll("#preloader, #preloader-first, #pre-one, #pre-two, #pre-three, .preloader-wrapper");
       for (const node of nodes) {
@@ -2846,7 +2846,6 @@ const HERO_MODEL_REVEAL_HANDOFF_LEAD_SECONDS = 1.15;
       bootWhenPageIsSet();
       scheduleHeroEntranceAnimationsOnce(0);
     } else {
-      // User is at top - animate scale up normally, then let the page sit before boot
       modelEntranceComplete = false;
       const entranceStartScale =
         targetScale * HERO_MODEL_ENTRANCE_START_SCALE_RATIO;
@@ -2857,7 +2856,8 @@ const HERO_MODEL_REVEAL_HANDOFF_LEAD_SECONDS = 1.15;
       );
       model.visible = true;
       if (!reducedMotion) holdDemoBoot();
-      animateModelScale(targetScale, bootWhenPageIsSet);
+      animateModelScale(targetScale);
+      bootWhenPageIsSet();
       scheduleHeroEntranceAnimationsOnce(0);
     }
 
