@@ -136,7 +136,7 @@ export function enterTable(
 
 export function claimSeason(save: Save): string {
   const buddy = active(save)
-  if (!buddy) return ''
+  if (!buddy) return 'Hatch a cat before marking a season.'
   const now = Date.now()
   rollSeason(save, now)
   const report = seasonReport(save, buddy, now)

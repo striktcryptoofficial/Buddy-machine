@@ -43,11 +43,14 @@ html:not(:has(#preloader)) .hero-field{animation:hero-field-in .9s ease .2s forw
 .nav-explore{flex:none;margin-left:1.25rem;margin-right:0}
 #features :is(.features-bg,.features-bg-mobile,.features-bg-mob){filter:url(#features-plate)}
 .home_image-wrapper>.video-code-embed{position:relative}
-.lottie-container{position:relative}
+#lottiee-section .home_image-wrapper,#scope-2 .home_image-wrapper{position:relative;z-index:8}
+.lottie-container{position:relative;z-index:8}
 .lottie-container dotlottie-player{opacity:0 !important;visibility:hidden !important}
-.feature-chevrons{position:absolute;left:0;right:0;top:calc(48.5svh - 5.75rem);height:11.5rem;display:grid;grid-template-columns:1fr min(34vh,24rem) 1fr;align-items:center;pointer-events:none;visibility:hidden;z-index:4}
-.feature-chevrons__side{display:flex;align-items:center;justify-content:space-evenly;height:67%;min-width:0;min-height:0}
-.feature-chevrons__side svg{height:100%;width:auto;max-height:100%;display:block;flex:none;opacity:0;transform-origin:center center}
+.feature-chevrons{position:absolute;left:0;right:0;top:calc(48.5svh - 5.75rem);height:11.5rem;display:grid;grid-template-columns:minmax(0,1fr) min(58vw,42rem) minmax(0,1fr);align-items:center;pointer-events:none;visibility:hidden;z-index:2}
+.feature-chevrons__side{display:flex;align-items:center;gap:0.4vw;height:67%;min-width:0;min-height:0;overflow:hidden}
+.feature-chevrons__side:first-child{justify-content:flex-end;padding-right:0.6vw}
+.feature-chevrons__side:last-child{justify-content:flex-start;padding-left:0.6vw}
+.feature-chevrons__side svg{height:100%;width:auto;max-width:18%;max-height:100%;display:block;flex:none;opacity:0;transform-origin:center center}
 #features .stroke-wrap,#features .section-content-wrap{background-color:#7E7EFF}
 #features :is(.card-text,.home_defence-description,.home_secure-text){color:rgba(255,255,255,.88)}
 #section-hero .section_home-content-wrapper{bottom:12rem}

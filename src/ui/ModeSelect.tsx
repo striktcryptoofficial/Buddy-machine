@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ArrowRight, Compass, Heart, Play, Swords, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Compass, Heart, Play, Swords, type LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 import './cards/play.css'
 
@@ -91,19 +91,25 @@ export function ModeSelect({
   onArena,
   onField,
   onPick,
+  locked = false,
+  onLocked,
 }: {
   hidden: boolean
   closePlay: number
   onArena: () => void
   onField: () => void
   onPick: (open: boolean) => void
+  locked?: boolean
+  onLocked?: () => void
 }) {
   const playRef = useRef<HTMLDivElement>(null)
   const pickRef = useRef<HTMLDivElement>(null)
   const onPickRef = useRef(onPick)
   const timeline = useRef<gsap.core.Timeline | null>(null)
   const [picking, setPicking] = useState(false)
+  const pickingRef = useRef(false)
   onPickRef.current = onPick
+  pickingRef.current = picking
 
   useLayoutEffect(() => {
     if (!closePlay) return
@@ -145,6 +151,7 @@ export function ModeSelect({
   }, [])
 
   function openCards() {
+    if (locked || pickingRef.current) return
     const pop = playRef.current?.querySelector('[data-pop]')
     if (pop instanceof HTMLElement) pop.style.pointerEvents = 'auto'
     timeline.current?.timeScale(1).play()
@@ -190,18 +197,53 @@ export function ModeSelect({
     if (!pick) return
     const show = picking && !hidden
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const cards = pick.querySelectorAll<HTMLElement>('.mode-card')
+    const bits = pick.querySelectorAll<HTMLElement>('.mode-card .card-face > *')
+    const back = pick.querySelector<HTMLElement>('.mode-pick__back')
+    gsap.killTweensOf([pick, cards, bits, back])
     if (!show) {
       pick.style.pointerEvents = 'none'
       restModeCards(pick)
-    } else {
-      pick.style.pointerEvents = 'auto'
+      gsap.to(bits, { y: 10, opacity: 0, duration: reduce ? 0 : 0.18, stagger: reduce ? 0 : 0.01, ease: 'power2.in' })
+      gsap.to(cards, {
+        y: 28,
+        scale: 0.9,
+        opacity: 0,
+        filter: reduce ? 'none' : 'blur(12px)',
+        duration: reduce ? 0 : 0.32,
+        stagger: reduce ? 0 : 0.04,
+        ease: 'power3.in',
+      })
+      gsap.to(back, { y: -8, opacity: 0, duration: reduce ? 0 : 0.22, ease: 'power2.in' })
+      gsap.to(pick, { autoAlpha: 0, duration: reduce ? 0 : 0.28, delay: reduce ? 0 : 0.06, ease: 'power2.in' })
+      return
     }
-    gsap.to(pick, {
-      autoAlpha: show ? 1 : 0,
-      duration: reduce ? 0 : 0.35,
-      ease: 'power2.out',
-      overwrite: 'auto',
-    })
+    pick.style.pointerEvents = 'auto'
+    gsap.set(pick, { autoAlpha: 1 })
+    gsap.fromTo(
+      back,
+      { y: -14, opacity: 0, filter: reduce ? 'none' : 'blur(10px)' },
+      { y: 0, opacity: 1, filter: 'blur(0px)', duration: reduce ? 0 : 0.5, ease: 'expo.out' },
+    )
+    gsap.fromTo(
+      cards,
+      { y: 40, scale: 0.86, opacity: 0, filter: reduce ? 'none' : 'blur(16px)' },
+      {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        filter: 'blur(0px)',
+        duration: reduce ? 0 : 0.7,
+        stagger: reduce ? 0 : 0.07,
+        ease: 'expo.out',
+      },
+    )
+    gsap.fromTo(
+      bits,
+      { y: 16, opacity: 0 },
+      { y: 0, opacity: 1, duration: reduce ? 0 : 0.46, stagger: reduce ? 0 : 0.02, delay: reduce ? 0 : 0.12, ease: 'power3.out' },
+    )
+    closeCards()
   }, [picking, hidden])
 
   function choose(id: string) {
@@ -217,8 +259,14 @@ export function ModeSelect({
         <button
           type="button"
           className="play-button"
-          aria-expanded={picking}
-          onClick={() => setPicking((open) => !open)}
+          aria-expanded={locked ? false : picking}
+          onClick={() => {
+            if (locked) {
+              onLocked?.()
+              return
+            }
+            setPicking((open) => !open)
+          }}
         >
           <Play strokeWidth={1.75} aria-hidden="true" />
           Play
@@ -250,6 +298,10 @@ export function ModeSelect({
         </div>
       </div>
       <div className="mode-pick" ref={pickRef} aria-hidden={picking ? undefined : true}>
+        <button type="button" className="mode-pick__back" onClick={() => setPicking(false)}>
+          <ArrowLeft strokeWidth={1.75} aria-hidden="true" />
+          Back
+        </button>
         <div className="mode-pick__row">
           {MODES.map((mode) => {
             const Icon = mode.icon

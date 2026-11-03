@@ -27,8 +27,9 @@ import { useBuddy } from '../../Game engine/mechanics/store'
 import { TRAIT_KEYS } from '../../Game engine/mechanics/types'
 import carrierSheet from '../../Game engine/assets/cat/LittleKitties/BONUSgift/GreyBunnyPaid/BunnyStuffs/PetCarryBox.png'
 import { Heart, Play, Smartphone, User } from 'lucide-react'
+import { AiCredit } from '../ui/AiCredit'
+import PromptBar from '../ui/PromptBar'
 import { EdgeTabs } from '../ui/EdgeTabs'
-import { PurseSheet } from '../ui/PurseSheet'
 import { HouseTape } from '../ui/HouseTape'
 import { WalletCard } from '../ui/WalletCard'
 import { createMachine, machineScene, type MachineHandle, type MachineKey } from './createMachine'
@@ -68,7 +69,7 @@ export function MachineView() {
     document.body.classList.add('is-machine')
     const mount = mountRef.current
     if (!mount || !screen) return
-    const world = createMachine(mount, screen, (key) => pressRef.current(key), () => openRef.current())
+    const world = createMachine(mount, screen, (key) => pressRef.current(key), () => openRef.current(), () => powerRef.current())
     world.setReadout(apiRef.current.active)
     if (!apiRef.current.active) world.setPower(false)
     worldRef.current = world
@@ -86,6 +87,8 @@ export function MachineView() {
   const [surface, setSurface] = useState<'board' | 'field' | 'play' | null>(null)
   const [purseOpen, setPurseOpen] = useState(false)
   const [fold, setFold] = useState(0)
+  const [sheetOpen, setSheetOpen] = useState<{ id: 'stats' | 'abilities'; n: number } | null>(null)
+  const [gateOpen, setGateOpen] = useState(false)
   const [sheet, setSheet] = useState<Sheet>('life')
   const [opening, setOpening] = useState(false)
   const [born, setBorn] = useState(false)
@@ -95,6 +98,7 @@ export function MachineView() {
   const hatching = useRef(false)
   const phaseRef = useRef(phase)
   const pressRef = useRef<(key: MachineKey) => void>(() => {})
+  const powerRef = useRef<() => void>(() => {})
   const revealMode = useRef<'snap' | 'animate'>('snap')
   playBurst = (rarity) => worldRef.current?.playRarity(rarity)
   readHatchedRarity = () => apiRef.current.active?.dna.rarity
@@ -122,14 +126,40 @@ export function MachineView() {
   function powerOn() {
     if (phaseRef.current !== 'off') return
     worldRef.current?.setPower(true)
+    if (apiRef.current.active) {
+      worldRef.current?.setBoot(null)
+      setPhase('ready')
+      return
+    }
     worldRef.current?.setBoot(0)
     setBootTime(0)
     setPhase('boot')
   }
 
+  function powerOff() {
+    if (phaseRef.current === 'off') return
+    worldRef.current?.setPower(false)
+    worldRef.current?.setBoot(null)
+    setBootTime(0)
+    setLeaving(false)
+    setOpening(false)
+    setInfo(false)
+    hatching.current = false
+    setPhase('off')
+  }
+
+  powerRef.current = () => {
+    if (phaseRef.current === 'off') powerOn()
+    else powerOff()
+  }
+
   function onEdge(id: 'challenges' | 'stats' | 'abilities') {
     edgeRef.current = id
     setPurseOpen(false)
+    if (id === 'stats') {
+      worldRef.current?.setPull(true, 'hero')
+      return
+    }
     worldRef.current?.setPull(true)
   }
 
@@ -158,6 +188,10 @@ export function MachineView() {
   }
 
   function beginHatch() {
+    if (!apiRef.current.wallet) {
+      void apiRef.current.connect()
+      return
+    }
     if (phaseRef.current !== 'ready' || hatching.current || apiRef.current.active) return
     hatching.current = true
     setOpening(true)
@@ -221,19 +255,116 @@ export function MachineView() {
   }, [])
 
   return (
-    <div className={`machine-page${surface === 'board' ? ' is-board' : ''}${surface === 'field' ? ' is-field' : ''}${surface === 'play' ? ' is-play' : ''}`} style={{ ['--case-mark' as string]: String(api.perks.mark) }}>
+    <div className={`machine-page${buddy ? '' : ' is-empty'}${surface === 'board' ? ' is-board' : ''}${surface === 'field' ? ' is-field' : ''}${surface === 'play' ? ' is-play' : ''}`} style={{ ['--case-mark' as string]: String(api.perks.mark) }}>
       <div ref={mountRef} className="machine-stage" />
       <div ref={stickerRef} className="rarity-sticker" aria-hidden="true" />
       <HouseTape />
-      <WalletCard open={purseOpen} onPurse={togglePurse} />
-      {purseOpen && <PurseSheet />}
+      <WalletCard
+        open={purseOpen}
+        onPurse={togglePurse}
+        onOpenSheet={(id) => {
+          onEdge(id)
+          setSheetOpen({ id, n: Date.now() })
+        }}
+      />
+      <AiCredit />
+      <div className="machine-prompt">
+        <PromptBar
+          placeholder={buddy ? `Hello to ${buddy.name}` : 'Ask anything'}
+          models={[
+            { key: 'haiku', name: 'Haiku 5.5', tag: 'Cat' },
+            { key: 'sonnet', name: 'Sonnet 5.5', tag: 'Awake' },
+          ]}
+          defaultModel="haiku"
+          messages={(buddy?.turns ?? []).map((turn, index) => ({
+            key: `${turn.at}-${index}`,
+            role: turn.role,
+            text: turn.text,
+          }))}
+          pending={buddy?.turns?.at(-1)?.role === 'you'}
+          catName={buddy?.name ?? 'Buddy'}
+          youLabel={api.ownerName || 'You'}
+          cat={
+            <span className="prompt-bar__avatar-fit">
+              <PixelCat
+                base={buddy?.dna.base}
+                moving={false}
+                energy="still"
+                zzz={false}
+                lean={0}
+                mood="content"
+                hunger={0.2}
+                happiness={0.5}
+              />
+            </span>
+          }
+          onSend={(text) => api.talk(text)}
+          onAttach={() =>
+            new Promise((resolve) => {
+              const input = document.createElement('input')
+              input.type = 'file'
+              input.onchange = () => resolve(input.files?.[0]?.name)
+              input.click()
+            })
+          }
+          onDictate={() =>
+            new Promise((resolve) => {
+              const host = window as Window & {
+                SpeechRecognition?: new () => {
+                  lang: string
+                  start: () => void
+                  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+                  onerror: (() => void) | null
+                }
+                webkitSpeechRecognition?: new () => {
+                  lang: string
+                  start: () => void
+                  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+                  onerror: (() => void) | null
+                }
+              }
+              const Ctor = host.SpeechRecognition || host.webkitSpeechRecognition
+              if (!Ctor) {
+                resolve()
+                return
+              }
+              const rec = new Ctor()
+              rec.lang = 'en-US'
+              rec.onresult = (event) => resolve(event.results[0][0].transcript)
+              rec.onerror = () => resolve()
+              rec.start()
+            })
+          }
+        />
+      </div>
       <EdgeTabs
         fold={fold}
+        openSheet={sheetOpen}
         onSelect={onEdge}
         onReturn={onReturn}
         onPick={(open) => worldRef.current?.setPick(open)}
         onSurface={setSurface}
+        onLocked={() => setGateOpen(true)}
       />
+      {gateOpen && !buddy ? (
+        <GateModal
+          wallet={Boolean(api.wallet)}
+          phase={phase}
+          onClose={() => setGateOpen(false)}
+          onAct={() => {
+            setGateOpen(false)
+            if (!apiRef.current.wallet) {
+              void apiRef.current.connect()
+              return
+            }
+            if (phaseRef.current === 'off') {
+              powerOn()
+              return
+            }
+            beginHatch()
+          }}
+        />
+      ) : null}
       <nav className="machine-nav" aria-label="Example">
         <span className="is-on" aria-label="Buddy">
           <Smartphone strokeWidth={1.75} aria-hidden="true" />
@@ -435,6 +566,47 @@ function BootScreen({ time, leaving }: { time: number; leaving: boolean }) {
   )
 }
 
+function GateModal({
+  wallet,
+  phase,
+  onClose,
+  onAct,
+}: {
+  wallet: boolean
+  phase: 'off' | 'boot' | 'ready'
+  onClose: () => void
+  onAct: () => void
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+  const kicker = wallet ? 'Hatch' : 'Wallet'
+  const title = wallet ? (phase === 'off' ? 'Turn the machine on' : 'Hatch a cat') : 'Connect a wallet'
+  const line = wallet
+    ? phase === 'off'
+      ? 'Play and challenges open after this wallet hatches a cat.'
+      : 'This wallet has no cat yet. Hatch one to play.'
+    : 'Play and challenges open after a wallet is connected and a cat is hatched.'
+  const action = wallet ? (phase === 'off' ? 'Turn on' : 'Hatch') : 'Connect wallet'
+  return (
+    <div className="gate-modal" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+      <button type="button" className="gate-modal__scrim" aria-label="Close" onClick={onClose} />
+      <div className="gate-modal__card">
+        <p className="gate-modal__kicker">{kicker}</p>
+        <h2 id="gate-title">{title}</h2>
+        <p className="gate-modal__line">{line}</p>
+        <button type="button" className="wallet-card__purse" onClick={onAct} disabled={phase === 'boot'}>
+          {phase === 'boot' ? 'Starting' : action}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function HatchScreen({ opening, arriving, onHatch }: { opening: boolean; arriving?: boolean; onHatch: () => void }) {
   return (
     <div className={`machine-hatch-screen ${opening ? 'is-opening' : ''} ${arriving ? 'is-arriving' : ''}`}>
@@ -474,7 +646,7 @@ function ScreenCat({
   const api = useBuddy()
   const buddy = api.active
   const visual = buddy ? visualFor(buddy) : null
-  if (!buddy && !powered) return <TurnOnScreen onPower={onPower} />
+  if (!powered) return <TurnOnScreen onPower={onPower} />
   if (!buddy && booting) {
     return (
       <>

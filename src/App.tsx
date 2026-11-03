@@ -5,7 +5,6 @@ export function App() {
   return (
     <BuddyProvider>
       <MachineView />
-      <div className="page-noise" aria-hidden="true" />
     </BuddyProvider>
   )
 }

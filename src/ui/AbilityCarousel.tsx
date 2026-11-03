@@ -176,24 +176,75 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     const root = rootRef.current
     if (!root) return
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const cards = root.querySelectorAll<HTMLElement>('.ability-card')
+    const head = root.querySelectorAll<HTMLElement>('.ability-carousel__head > *')
+    const innards = root.querySelectorAll<HTMLElement>('.ability-card .card-face > *')
+    gsap.killTweensOf([root, cards, head, innards])
     if (!open) {
       root.style.pointerEvents = 'none'
-      gsap.to(root, { autoAlpha: 0, duration: reduce ? 0 : 0.28, ease: 'power2.in', overwrite: 'auto' })
+      gsap.to(innards, {
+        opacity: 0,
+        duration: reduce ? 0 : 0.16,
+        stagger: reduce ? 0 : 0.01,
+        ease: 'power2.in',
+      })
+      gsap.to(head, {
+        y: -6,
+        opacity: 0,
+        duration: reduce ? 0 : 0.22,
+        stagger: reduce ? 0 : 0.04,
+        ease: 'power2.in',
+      })
+      gsap.to(cards, {
+        y: 16,
+        opacity: 0,
+        duration: reduce ? 0 : 0.3,
+        stagger: reduce ? 0 : 0.03,
+        ease: 'power3.in',
+      })
+      gsap.to(root, { autoAlpha: 0, duration: reduce ? 0 : 0.26, delay: reduce ? 0 : 0.06, ease: 'power2.in' })
       return
     }
     root.style.pointerEvents = 'auto'
-    gsap.to(root, {
-      autoAlpha: 1,
-      duration: reduce ? 0 : 0.45,
-      ease: 'power3.out',
-      overwrite: 'auto',
-    })
-  }, [open])
+    gsap.set(root, { autoAlpha: 1 })
+    gsap.set(cards, { clearProps: 'filter,scale' })
+    gsap.fromTo(
+      head,
+      { y: -10, opacity: 0 },
+      { y: 0, opacity: 1, duration: reduce ? 0 : 0.52, stagger: reduce ? 0 : 0.06, ease: 'expo.out' },
+    )
+    gsap.fromTo(
+      cards,
+      { y: 18, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: reduce ? 0 : 0.62,
+        stagger: reduce ? 0 : 0.05,
+        ease: 'expo.out',
+        onComplete() {
+          gsap.set(cards, { clearProps: 'transform,filter' })
+        },
+      },
+    )
+    gsap.fromTo(
+      innards,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: reduce ? 0 : 0.42,
+        stagger: reduce ? 0 : 0.016,
+        delay: reduce ? 0 : 0.12,
+        ease: 'power3.out',
+      },
+    )
+  }, [open, kind, cards.length])
 
   useLayoutEffect(() => {
+    const root = rootRef.current
     const viewport = listRef.current
     const track = trackRef.current
-    if (!viewport || !track) return
+    if (!open || !root || !viewport || !track) return
     const scroller = viewport
     const row = track
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -274,6 +325,7 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     }
     function wheel(event: WheelEvent) {
       event.preventDefault()
+      event.stopPropagation()
       let delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
       if (event.deltaMode === 1) delta *= 40
       else if (event.deltaMode === 2) delta *= scroller.clientWidth
@@ -294,23 +346,38 @@ export function AbilityCarousel({ open, kind }: { open: boolean; kind: 'abilitie
     scroller.addEventListener('pointermove', move)
     scroller.addEventListener('pointerup', up)
     scroller.addEventListener('pointercancel', up)
-    scroller.addEventListener('wheel', wheel, { passive: false })
+    root.addEventListener('wheel', wheel, { passive: false })
     return () => {
       if (raf) cancelAnimationFrame(raf)
       scroller.removeEventListener('pointerdown', down)
       scroller.removeEventListener('pointermove', move)
       scroller.removeEventListener('pointerup', up)
       scroller.removeEventListener('pointercancel', up)
-      scroller.removeEventListener('wheel', wheel)
+      root.removeEventListener('wheel', wheel)
     }
-  }, [kind, cards.length])
+  }, [open, kind, cards.length])
 
+  const readyCount = cards.filter((card) => card.ready).length
+  const lead = cards.find((card) => card.ready)?.code ?? cards[0]?.code ?? '—'
   const label = kind === 'abilities'
     ? `Abilities. ${cards.map((card) => card.name).join(', ')}`
     : 'Challenge record'
 
   return (
-    <section className="ability-carousel" ref={rootRef} aria-hidden={open ? undefined : true} aria-label={label}>
+    <section className={`ability-carousel${open ? ' is-open' : ''}`} ref={rootRef} aria-hidden={open ? undefined : true} aria-label={label}>
+      <div className="ability-carousel__head">
+        <h2 className="ability-carousel__title">{kind === 'abilities' ? 'Abilities' : 'Record'}</h2>
+        <p className="ability-carousel__sub">{kind === 'abilities' ? 'Active kit' : 'Challenge marks'}</p>
+        <span className="ability-carousel__meta">
+          <em>{String(cards.length).padStart(2, '0')}</em>
+          slots
+          <i aria-hidden="true" />
+          <em>{String(readyCount).padStart(2, '0')}</em>
+          ready
+          <i aria-hidden="true" />
+          <b>{lead}</b>
+        </span>
+      </div>
       <div className="ability-carousel__list" ref={listRef}>
         <div className="ability-carousel__track" ref={trackRef}>
         {cards.map((card) => {

@@ -113,34 +113,72 @@ export function StatSheet({ open }: { open: boolean }) {
     const root = rootRef.current
     if (!root) return
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const face = root.querySelector<HTMLElement>('.stat-sheet__face')
+    const bits = root.querySelectorAll<HTMLElement>('.stat-sheet__head > *, .stat-sheet__block, .stat-sheet__plot, .stat-sheet__chip, .stat-sheet__stats li')
     const fills = root.querySelectorAll<HTMLElement>('.stat-sheet__fill')
+    gsap.killTweensOf([root, face, bits, fills])
     if (!open) {
       root.style.pointerEvents = 'none'
-      gsap.killTweensOf(fills)
-      gsap.to(root, { autoAlpha: 0, x: 28, duration: reduce ? 0 : 0.28, ease: 'power2.in', overwrite: 'auto' })
+      gsap.to(bits, {
+        y: 10,
+        opacity: 0,
+        duration: reduce ? 0 : 0.2,
+        stagger: reduce ? 0 : 0.015,
+        ease: 'power2.in',
+      })
+      gsap.to(face, {
+        x: 24,
+        scale: 0.96,
+        opacity: 0,
+        filter: reduce ? 'none' : 'blur(12px)',
+        duration: reduce ? 0 : 0.34,
+        ease: 'power3.in',
+      })
+      gsap.to(root, { autoAlpha: 0, duration: reduce ? 0 : 0.28, delay: reduce ? 0 : 0.06, ease: 'power2.in' })
       return
     }
     root.style.pointerEvents = 'auto'
-    gsap.fromTo(root, { autoAlpha: 0, x: 36 }, {
-      autoAlpha: 1,
-      x: 0,
-      duration: reduce ? 0 : 0.55,
-      ease: 'power3.out',
-      overwrite: 'auto',
-    })
-    fills.forEach((fill, index) => {
-      gsap.fromTo(fill, { width: '0%' }, {
-        width: `${fill.dataset.value}%`,
+    gsap.set(root, { autoAlpha: 1 })
+    gsap.fromTo(
+      face,
+      { x: 40, scale: 0.94, opacity: 0, filter: reduce ? 'none' : 'blur(16px)' },
+      {
+        x: 0,
+        scale: 1,
+        opacity: 1,
+        filter: 'blur(0px)',
+        duration: reduce ? 0 : 0.68,
+        ease: 'expo.out',
+      },
+    )
+    gsap.fromTo(
+      bits,
+      { y: 18, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
         duration: reduce ? 0 : 0.5,
-        ease: 'power2.out',
-        delay: reduce ? 0 : 0.08 + index * 0.05,
-        overwrite: 'auto',
-      })
+        stagger: reduce ? 0 : 0.035,
+        delay: reduce ? 0 : 0.1,
+        ease: 'power3.out',
+      },
+    )
+    fills.forEach((fill, index) => {
+      gsap.fromTo(
+        fill,
+        { width: '0%' },
+        {
+          width: `${fill.dataset.value}%`,
+          duration: reduce ? 0 : 0.55,
+          ease: 'expo.out',
+          delay: reduce ? 0 : 0.22 + index * 0.05,
+        },
+      )
     })
   }, [open])
 
   return (
-    <aside className="stat-sheet" ref={rootRef} aria-hidden={open ? undefined : true} aria-label={`${name} stats`}>
+    <aside className={`stat-sheet${open ? ' is-open' : ''}`} ref={rootRef} aria-hidden={open ? undefined : true} aria-label={`${name} stats`}>
       <div className="card-face stat-sheet__face">
         <header className="stat-sheet__head">
           <p className="stat-sheet__kicker">Creature</p>

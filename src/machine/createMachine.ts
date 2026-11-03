@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { createAsciiBackdrop } from './asciiBackdrop'
 import { create as createQr } from 'qrcode'
 import { CSS3DObject, CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
@@ -102,7 +103,7 @@ export type MachineHandle = {
   setPower: (on: boolean) => void
   setLights: (buddy: BuddyState | null) => void
   playRarity: (rarity: string) => void
-  setPull: (on: boolean) => void
+  setPull: (on: boolean, size?: 'band' | 'hero') => void
   setPick: (on: boolean) => void
   faceFront: () => void
   sticker: HTMLCanvasElement
@@ -116,6 +117,7 @@ export function createMachine(
   screen: HTMLElement,
   onPress: (key: MachineKey) => void,
   onScreen: () => void,
+  onRocker: () => void,
 ): MachineHandle {
   const glScene = new THREE.Scene()
   const cssScene = new THREE.Scene()
@@ -123,6 +125,7 @@ export function createMachine(
   camera.position.set(0, 30, 1800)
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  const ascii = createAsciiBackdrop()
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -139,6 +142,15 @@ export function createMachine(
   const overlayScene = new THREE.Scene()
   const overlayCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100)
   overlayCamera.position.z = 10
+  const overlayRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  overlayRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  overlayRenderer.outputColorSpace = THREE.SRGBColorSpace
+  overlayRenderer.toneMapping = THREE.NoToneMapping
+  overlayRenderer.setClearColor(0x000000, 0)
+  overlayRenderer.domElement.className = 'machine-rarity'
+  overlayRenderer.domElement.hidden = true
+  const overlayHost = mount.closest('.machine-page') ?? mount.parentElement ?? mount
+  overlayHost.appendChild(overlayRenderer.domElement)
 
   glScene.environment = productEnvironment(renderer)
 
@@ -222,6 +234,15 @@ export function createMachine(
   rocker.castShadow = true
   placeOnSide(rocker, BODY.w / 2 + 6, 70, sideZ)
   pivot.add(rocker)
+  const rockerBaseX = rocker.position.x
+  const hintEl = document.createElement('div')
+  hintEl.className = 'power-hint'
+  hintEl.setAttribute('aria-hidden', 'true')
+  hintEl.innerHTML = '<span class="power-hint__rings"><i></i><i></i><i></i></span><span class="power-hint__label">Turn on</span>'
+  mount.appendChild(hintEl)
+  const hintAnchor = new THREE.Vector3()
+  const hintNdc = new THREE.Vector3()
+  const hintEdge = new THREE.Vector3()
   const power = new THREE.Mesh(roundedBox(16, 28, 24, 6), sidePlastic())
   power.castShadow = true
   placeOnSide(power, BODY.w / 2 + 4, -30, sideZ)
@@ -314,6 +335,8 @@ export function createMachine(
   let lastX = 0
   let lastY = 0
   let held: MachineKey | null = null
+  let rockerHeld = false
+  let rockerAnim = 0
 
   const pointer = new THREE.Vector2()
   const raycaster = new THREE.Raycaster()
@@ -332,6 +355,12 @@ export function createMachine(
     aim(event)
     const hit = raycaster.intersectObjects(keyRoots, true)[0]?.object
     return hit?.userData.key as MachineKey | undefined
+  }
+
+  function pickRocker(event: PointerEvent) {
+    aim(event)
+    rocker.updateWorldMatrix(true, false)
+    return raycaster.intersectObject(rocker, false).length > 0
   }
 
   function screenHitAt(event: PointerEvent) {
@@ -457,7 +486,9 @@ export function createMachine(
     moved = 0
     lastX = event.clientX
     lastY = event.clientY
-    held = pick(event) ?? null
+    rockerHeld = pickRocker(event)
+    if (rockerHeld) rockerAnim = 0.001
+    held = rockerHeld ? null : pick(event) ?? null
     if (held) keys[held].goal = 1
     mount.setPointerCapture(event.pointerId)
   }
@@ -471,7 +502,7 @@ export function createMachine(
     if (!dragging) {
       if (coarse) return
       const hover = pick(event)
-      canvas.style.cursor = hover || pickSticker(event) ? 'pointer' : 'grab'
+      canvas.style.cursor = hover || pickRocker(event) || pickSticker(event) ? 'pointer' : 'grab'
       return
     }
     const dx = event.clientX - lastX
@@ -489,6 +520,7 @@ export function createMachine(
       }
       if (held) keys[held].goal = 0
       held = null
+      rockerHeld = false
       const spin = coarse ? 0.008 : 0.0055
       userYaw = clamp(userYaw + dx * spin, -Math.PI, Math.PI)
       userPitch = clamp(userPitch + dy * 0.0035, -0.28, 0.22)
@@ -515,8 +547,20 @@ export function createMachine(
       return
     }
     const key = held
+    const sideButton = rockerHeld
     const tapped = dragging && moved < 10
+    rockerHeld = false
     const didDrag = dragging && moved >= 10
+    if (sideButton && tapped) {
+      onRocker()
+      if (key) keys[key].goal = 0
+      held = null
+      dragging = false
+      spinning = false
+      canvas.style.cursor = 'grab'
+      if (mount.hasPointerCapture(event.pointerId)) mount.releasePointerCapture(event.pointerId)
+      return
+    }
     if (!key && tapped) {
       const glassSay = sayBarInputFromPointer(event)
       if (glassSay) {
@@ -551,6 +595,7 @@ export function createMachine(
     if (
       tapped &&
       !key &&
+      !sideButton &&
       !target?.closest('button, a') &&
       pickScreen(event) &&
       !sayBarInputFromPointer(event) &&
@@ -558,7 +603,7 @@ export function createMachine(
     ) {
       onScreen()
     }
-    if (tapped && !key && !pickScreen(event) && pickShell(event)) {
+    if (tapped && !key && !sideButton && !pickScreen(event) && pickShell(event)) {
       const sayInput = sayBarInputFromPointer(event)
       if (sayInput) {
         faceFront()
@@ -569,11 +614,27 @@ export function createMachine(
         userPitch = 0
       }
     }
+    if (
+      tapped &&
+      !key &&
+      !sideButton &&
+      shownId &&
+      straight &&
+      !coarse &&
+      !pickScreen(event) &&
+      !pickShell(event) &&
+      !pickRocker(event)
+    ) {
+      straight = false
+      userYaw = 0
+      userPitch = 0
+    }
   }
 
   function onPointerCancel() {
     pressingControl = null
     pressedScreen = false
+    rockerHeld = false
     if (held) keys[held].goal = 0
     held = null
     dragging = false
@@ -695,6 +756,8 @@ export function createMachine(
   let zoomGoal = 0
   let pull = 0
   let pullGoal = 0
+  let pullBand = 1
+  let pullBandGoal = 1
   let recess = 0
   let recessGoal = 0
   let recessBlur = 0
@@ -739,6 +802,7 @@ export function createMachine(
     bloomComposer.setSize(w, h)
     zoomDistance = zoomDist()
     cssRenderer.setSize(w, h)
+    overlayRenderer.setSize(w, h)
     overlayCamera.left = -w / 2
     overlayCamera.right = w / 2
     overlayCamera.top = h / 2
@@ -851,12 +915,14 @@ export function createMachine(
     if (zoomGoal > 0 && stickerFront.dot(toCamera.copy(camera.position).sub(stickerPoint)) < 0.2) zoomGoal = 0
     zoom = THREE.MathUtils.damp(zoom, zoomGoal, 4.5, dt)
     pull = THREE.MathUtils.damp(pull, pullGoal, 3, dt)
+    pullBand = THREE.MathUtils.damp(pullBand, pullBandGoal, 3, dt)
     recess = THREE.MathUtils.damp(recess, recessGoal, 3, dt)
     recessBlur = THREE.MathUtils.damp(recessBlur, recessBlurGoal, 8, dt)
     pageName.setBlur(pull)
-    const pullScale = 1 + pull * (pullOpenScale - 1)
+    const move = pull * pullBand
+    const pullScale = 1 + move * (pullOpenScale - 1)
     const frameScale = Math.max(pullScale, 1 + recess * 0.5)
-    const pullLift = pull * pullOpenLift
+    const pullLift = move * pullOpenLift
     paintVeil(recessBlur)
     camera.position.set(
       THREE.MathUtils.lerp(0, stickerPoint.x, zoom),
@@ -910,6 +976,30 @@ export function createMachine(
       pad.pressed = THREE.MathUtils.damp(pad.pressed, pad.goal, 18, dt)
       pad.group.position.z = 16 - pad.pressed * 8
     })
+    if (rockerAnim > 0) {
+      rockerAnim += dt / 0.28
+      if (rockerAnim >= 1) rockerAnim = 0
+    }
+    const rockerPress = rockerAnim > 0 ? Math.sin(Math.min(rockerAnim, 1) * Math.PI) : 0
+    rocker.position.x = rockerBaseX - rockerPress * 6
+    rocker.rotation.z = THREE.MathUtils.damp(rocker.rotation.z, 0, 14, dt)
+    const showPowerHint = !powered && bootTime == null
+    hintEl.classList.toggle('is-on', showPowerHint)
+    if (showPowerHint) {
+      rocker.updateWorldMatrix(true, false)
+      rocker.getWorldPosition(hintAnchor)
+      hintEdge.copy(hintAnchor)
+      hintEdge.y += 46
+      hintNdc.copy(hintAnchor).project(camera)
+      hintEdge.project(camera)
+      const w = mount.clientWidth
+      const h = mount.clientHeight
+      const x = (hintNdc.x * 0.5 + 0.5) * w
+      const y = (-hintNdc.y * 0.5 + 0.5) * h
+      const span = Math.hypot((hintEdge.x - hintNdc.x) * w, (hintEdge.y - hintNdc.y) * h) * 0.5
+      hintEl.style.transform = `translate(${x}px, ${y}px)`
+      hintEl.style.setProperty('--hint', `${Math.max(22, span)}px`)
+    }
     const ledMat = led.lamp.material as THREE.MeshStandardMaterial
     const elapsed = bootTime
     const booting = elapsed != null && !shownId
@@ -971,15 +1061,20 @@ export function createMachine(
     hunger.group.visible = lampsFaceCamera
     camera.layers.enable(BLOOM_LAYER)
     hideForBloom()
+    renderer.setClearColor(0x000000, 0)
     bloomComposer.render()
     restoreAfterBloom()
     camera.layers.disable(BLOOM_LAYER)
     renderer.setRenderTarget(null)
+    if (!shownId) ascii.draw(renderer, clock.t, focus)
+    renderer.setRenderTarget(null)
     renderer.autoClear = true
+    renderer.setClearColor(shownId ? 0x000000 : 0x0e0e0e, shownId ? 0 : 1)
     renderer.render(glScene, camera)
     bloomBlit.uniforms.tBloom.value = bloomComposer.readBuffer.texture
     renderer.autoClear = false
     renderer.render(bloomScene, bloomCamera)
+    if (!shownId) renderer.render(ascii.viewScene, ascii.viewCamera)
     if (rarityRun) {
       const t = (performance.now() - rarityRun.start) / 1000
       const grow = Math.min(1, t / 0.7)
@@ -989,9 +1084,11 @@ export function createMachine(
         rarityRun.sparks.visible = true
         rarityRun.burstMat.uniforms.uTime.value = t - 1.05
       }
-      renderer.clearDepth()
-      renderer.render(overlayScene, overlayCamera)
+      overlayRenderer.domElement.hidden = false
+      overlayRenderer.render(overlayScene, overlayCamera)
       if (t > 2.15) clearRarity()
+    } else {
+      overlayRenderer.domElement.hidden = true
     }
     renderer.autoClear = true
     anchor.updateWorldMatrix(true, false)
@@ -1029,6 +1126,7 @@ export function createMachine(
 
   function clearRarity() {
     if (!rarityRun) return
+    overlayRenderer.domElement.hidden = true
     overlayScene.clear()
     rarityRun.sparks.dispose()
     rarityRun.texture.dispose()
@@ -1170,6 +1268,10 @@ export function createMachine(
         straight = true
         userYaw = 0
         userPitch = 0
+      } else if (shownId) {
+        straight = false
+        userYaw = 0
+        userPitch = 0
       }
     },
     setLights(buddy) {
@@ -1184,8 +1286,14 @@ export function createMachine(
       lightGoal.hunger = buddy.needs.hunger
     },
     playRarity,
-    setPull(on) {
+    setPull(on, size = 'band') {
       pullGoal = on ? 1 : 0
+      if (on && size === 'hero') {
+        pullBand = 0
+        pullBandGoal = 0
+      } else if (on) {
+        pullBandGoal = 1
+      }
       if (on) {
         recessGoal = 0
         clearRecessBlur()
@@ -1268,12 +1376,15 @@ export function createMachine(
       window.removeEventListener('pointerleave', onPointerLeave)
       window.removeEventListener('resize', onResize)
       cssScene.remove(cssObject)
-      bloomComposer.dispose()
+      ascii.dispose()
       bloomBlit.dispose()
       darkMaterial.dispose()
       renderer.dispose()
       renderer.domElement.remove()
+      overlayRenderer.dispose()
+      overlayRenderer.domElement.remove()
       cssRenderer.domElement.remove()
+      hintEl.remove()
       glScene.environment?.dispose()
       skinBackdrop.mesh.geometry.dispose()
       ;(skinBackdrop.mesh.material as THREE.Material).dispose()

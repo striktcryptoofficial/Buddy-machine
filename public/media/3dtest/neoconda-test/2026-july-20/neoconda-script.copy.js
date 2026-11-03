@@ -940,15 +940,32 @@ function initLottieControl() {
   });
 
 
+  const chevronRow = document.querySelector(".feature-chevrons");
   const chevronIcons = gsap.utils.toArray(".feature-chevrons svg");
   if (chevronIcons.length) {
     gsap.set(chevronIcons, { opacity: 0 });
+    const trailStart = "top bottom";
+    const trailEnd = () => "+=" + window.innerHeight * 2;
+    if (chevronRow) {
+      ScrollTrigger.create({
+        id: "CHEVRON-PIN",
+        trigger: "#trigger-2",
+        start: trailStart,
+        end: trailEnd,
+        pin: chevronRow,
+        pinSpacing: false,
+        anticipatePin: 1,
+        onRefresh(self) {
+          if (self.pin) self.pin.style.zIndex = "2";
+        },
+      });
+    }
     const chevronTrail = gsap.timeline({
       scrollTrigger: {
         id: "CHEVRON-TRAIL",
         trigger: "#trigger-2",
-        start: "top bottom",
-        end: () => "+=" + window.innerHeight * 2,
+        start: trailStart,
+        end: trailEnd,
         scrub: 0.45,
         markers: false,
       },

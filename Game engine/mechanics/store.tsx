@@ -38,24 +38,28 @@ import { seasonReport } from './season'
 import type { CharmId } from './house'
 
 const KEY = 'buddy-ai-v4'
-const WHO_KEY = 'buddy-who'
 
-function ownWallet(): string {
-  if (typeof window === 'undefined') return 'dev'
-  const host = window.location.hostname
-  if (host === 'localhost' || host === '127.0.0.1') return 'dev'
-  try {
-    const kept = localStorage.getItem(WHO_KEY)
-    if (kept && /^h_[a-z0-9]{16}$/.test(kept)) return kept
-    const next = `h_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
-    localStorage.setItem(WHO_KEY, next)
-    return next
-  } catch {
-    return `h_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
-  }
+type SolanaKey = { toString(): string }
+type SolanaProvider = {
+  connect: (opts?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: SolanaKey }>
+  disconnect?: () => Promise<void>
 }
 
-export const WALLET = ownWallet()
+const PREVIEW_WALLET = 'Bq7mR4tYp2sK9dH3nW8cF6vL5aJ1eXzGqP8uN4hT2kMa'
+
+let walletId = ''
+let previewWallet = false
+let lifeStream: EventSource | null = null
+let attachSerial = 0
+let onWalletChange: (wallet: string | null, note: string) => void = () => {}
+
+function solanaProvider(): SolanaProvider | null {
+  if (typeof window === 'undefined') return null
+  const host = window as Window & { solana?: SolanaProvider; phantom?: { solana?: SolanaProvider } }
+  if (host.phantom?.solana?.connect) return host.phantom.solana
+  if (host.solana?.connect) return host.solana
+  return null
+}
 
 let lifePushInFlight = false
 let lifeRevision = 0
@@ -113,18 +117,6 @@ function empty(): Save {
   }
 }
 
-function readMigration(): Save | null {
-  try {
-    const raw = localStorage.getItem(KEY)
-    if (!raw) return null
-    const data = JSON.parse(raw) as Save
-    if (!data?.buddies?.some((buddy) => buddy?.dna && buddy.personality && buddy.needs && buddy.pos)) return null
-    return data
-  } catch {
-    return null
-  }
-}
-
 function forgetBrowser() {
   try {
     localStorage.removeItem(KEY)
@@ -162,7 +154,55 @@ function normalizeBuddy(kept: BuddyState) {
   kept.careAt ??= {}
 }
 
+function clearSave(save: Save) {
+  const blank = empty()
+  save.ownerName = blank.ownerName
+  save.buddies = []
+  save.activeId = ''
+  save.holdings = 0
+  save.charm = null
+  save.pouch = null
+  save.charmClaimed = false
+  save.explorations = 0
+  save.reign = null
+  save.bowl = 0
+  save.seasonKey = ''
+  save.seasonScraps = 0
+  save.seasonPlays = 0
+  save.seasonClaimed = false
+  lifeRevision = 0
+}
+
+function closeStream() {
+  lifeStream?.close()
+  lifeStream = null
+}
+
+async function attachWallet(save: Save, address: string) {
+  const serial = ++attachSerial
+  walletId = address
+  clearSave(save)
+  const remote = await fetchLife(address)
+  if (serial !== attachSerial) return
+  forgetBrowser()
+  if (remote?.ok) {
+    adoptRemoteSave(save, remote.save)
+    lifeRevision = remote.revision
+  }
+  closeStream()
+  lifeStream = openStream(save, () => refreshGlass())
+}
+
+function detachWallet(save: Save) {
+  attachSerial += 1
+  walletId = ''
+  clearSave(save)
+  closeStream()
+  void solanaProvider()?.disconnect?.()
+}
+
 function pushLife(save: Save) {
+  if (!walletId || previewWallet) return
   const buddy = save.buddies.find((item) => item.id === save.activeId)
   if (!buddy) return
   if (lifePushInFlight) return
@@ -171,7 +211,7 @@ function pushLife(save: Save) {
   void fetch('/api/life', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ wallet: WALLET, id: buddy.id, save, revision: sent, writer: writerId }),
+    body: JSON.stringify({ wallet: walletId, id: buddy.id, save, revision: sent, writer: writerId }),
   })
     .then(async (response) => {
       const data = (await response.json()) as { ok?: boolean; revision?: number; save?: Save }
@@ -195,7 +235,8 @@ function persist(save: Save) {
   pushLife(save)
 }
 
-async function fetchLife(wallet = WALLET): Promise<{ ok: true; save: Save; revision: number } | { ok: false } | null> {
+async function fetchLife(wallet = walletId): Promise<{ ok: true; save: Save; revision: number } | { ok: false } | null> {
+  if (!wallet) return { ok: false }
   const controller = new AbortController()
   const timer = window.setTimeout(() => controller.abort(), 2000)
   try {
@@ -232,30 +273,8 @@ function adoptRemoteSave(target: Save, remote: Save) {
   return true
 }
 
-async function hydrate(save: Save) {
-  const local = readMigration()
-  const remote = await fetchLife()
-  if (remote === null) {
-    if (local?.buddies?.length) adoptRemoteSave(save, local)
-    return
-  }
-  const remoteBuddy = remote.ok
-    ? (remote.save.buddies.find((buddy) => buddy.id === remote.save.activeId) ?? remote.save.buddies[0])
-    : null
-  const localBuddy = local?.buddies.find((buddy) => buddy.id === local.activeId) ?? local?.buddies[0]
-  if (remote.ok && remoteBuddy && (!localBuddy || remoteBuddy.lastSimulatedAt >= localBuddy.lastSimulatedAt)) {
-    adoptRemoteSave(save, remote.save)
-    lifeRevision = remote.revision
-  } else if (local && localBuddy) {
-    adoptRemoteSave(save, local)
-    lifeRevision = 0
-    pushLife(save)
-  }
-  forgetBrowser()
-}
-
 function openStream(save: Save, onChange: () => void) {
-  const stream = new EventSource(`/api/stream?wallet=${encodeURIComponent(WALLET)}`)
+  const stream = new EventSource(`/api/stream?wallet=${encodeURIComponent(walletId)}`)
   stream.addEventListener('life', (event) => {
     let frame: { revision?: number; writer?: string } = {}
     try {
@@ -283,6 +302,10 @@ interface BuddyApi {
   ownerName: string
   buddies: BuddyState[]
   active: BuddyState | null
+  wallet: string | null
+  walletNote: string
+  connect: () => Promise<void>
+  disconnect: () => void
   hatch: (visualSeed?: number, owner?: string) => string
   select: (id: string) => void
   retire: (id: string) => void
@@ -330,15 +353,20 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
   const saveRef = useRef<Save>(empty())
   const talkTurn = useRef(0)
   const voiceInFlight = useRef(false)
-  const [ready, setReady] = useState(false)
+  const [wallet, setWallet] = useState<string | null>(null)
+  const [walletNote, setWalletNote] = useState('')
   const [version, setVersion] = useState(0)
   const bump = () => setVersion((value) => value + 1)
+  onWalletChange = (next, note) => {
+    setWallet(next)
+    setWalletNote(note)
+    bump()
+  }
 
   useEffect(() => {
     const save = saveRef.current
     let cancelled = false
     let intervalId = 0
-    let stream: EventSource | null = null
 
     // One voice request at a time. A new return outranks a pending voice beat.
     // The flag is cleared before the await, so the 200ms tick cannot ask twice.
@@ -386,24 +414,17 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
         })
     }
 
-    void (async () => {
-      await hydrate(save)
-      if (cancelled) return
-      refreshGlass = () => {
-        if (!cancelled) bump()
-      }
-      stream = openStream(save, () => {
-        if (!cancelled) bump()
-      })
+    refreshGlass = () => {
+      if (!cancelled) bump()
+    }
+    forgetBrowser()
 
-      const now = Date.now()
-      for (const buddy of save.buddies) catchUp(buddy, now)
+    const now = Date.now()
+    for (const buddy of save.buddies) catchUp(buddy, now)
+    voiceStep()
+    bump()
 
-      voiceStep()
-      bump()
-      setReady(true)
-
-      let last = performance.now()
+    let last = performance.now()
       let lastPersist = Date.now()
       let picture = pictureKey(save)
       intervalId = window.setInterval(() => {
@@ -439,8 +460,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
           picture = nextPicture
           bump()
         }
-      }, 200)
-    })()
+    }, 200)
 
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return
@@ -455,7 +475,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
     window.addEventListener('beforeunload', onLeave)
     return () => {
       cancelled = true
-      stream?.close()
+      closeStream()
       window.clearInterval(intervalId)
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('beforeunload', onLeave)
@@ -474,12 +494,25 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       ownerName: save.ownerName,
       buddies: save.buddies,
       active,
+      wallet,
+      walletNote,
+      connect: async () => {
+        previewWallet = true
+        walletId = PREVIEW_WALLET
+        onWalletChange(PREVIEW_WALLET, '')
+      },
+      disconnect: () => {
+        previewWallet = false
+        detachWallet(save)
+        onWalletChange(null, '')
+      },
       hatch: (visualSeed?, owner?) => {
+        if (!walletId) return ''
         const existing = save.buddies[0]
         if (existing) return existing.dna.rarity
         const ownerName = (owner ?? save.ownerName).trim() || 'friend'
         save.ownerName = ownerName
-        const seed = visualSeed ?? walletSeed(WALLET)
+        const seed = visualSeed ?? walletSeed(walletId)
         const buddy = createBuddy(ownerName, { visualSeed: seed })
         buddy.id = `w_${seed.toString(36)}`
         save.buddies = [buddy]
@@ -618,12 +651,12 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       reign: save.reign ?? null,
       season: active ? seasonReport(save, active, Date.now()) : null,
       enterTable: (mode, loadout = 'none') => {
-        const reason = enterTable(save, mode, loadout, WALLET)
+        const reason = enterTable(save, mode, loadout, walletId)
         touch()
         return reason
       },
       fight: (foe, mode, loadout = 'none', foeSave = null) => {
-        const outcome = fightPair(save, foe, mode, loadout, Math.random(), Date.now(), WALLET, foeSave)
+        const outcome = fightPair(save, foe, mode, loadout, Math.random(), Date.now(), walletId, foeSave)
         touch()
         return outcome
       },
@@ -667,9 +700,10 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
         save.holdings = next.holdings
         save.charm = next.charm
         save.pouch = next.pouch
-        if (active) active.reason = `She has a ${id}.`
+        const line = `She has a ${id}.`
+        if (active) active.reason = line
         touch()
-        return active?.reason ?? ''
+        return line
       },
       unequip: () => {
         const next = unequipCharm(save.charm ?? null, save.pouch ?? null)
@@ -705,9 +739,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
     }
     // version is the render clock; save is mutated in place.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version])
-
-  if (!ready) return null
+  }, [version, wallet, walletNote])
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>
 }

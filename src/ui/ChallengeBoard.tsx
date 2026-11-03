@@ -270,7 +270,16 @@ export function ChallengeBoard({ open }: { open: boolean }) {
       gsap.killTweensOf([...faces, ...shades])
       gsap.set(faces, { scale: 1, '--lift': 0, overwrite: true })
       gsap.set(shades, { scale: 1, opacity: 0, overwrite: true })
-      gsap.to(root, { autoAlpha: 0, duration: reduce ? 0 : 0.28, ease: 'power2.in', overwrite: 'auto' })
+      gsap.to(list, {
+        y: 24,
+        scale: 0.92,
+        opacity: 0,
+        filter: reduce ? 'none' : 'blur(12px)',
+        duration: reduce ? 0 : 0.32,
+        stagger: reduce ? 0 : 0.03,
+        ease: 'power3.in',
+      })
+      gsap.to(root, { autoAlpha: 0, duration: reduce ? 0 : 0.28, delay: reduce ? 0 : 0.06, ease: 'power2.in', overwrite: 'auto' })
       return
     }
     root.style.pointerEvents = 'auto'
@@ -278,29 +287,38 @@ export function ChallengeBoard({ open }: { open: boolean }) {
     tl.set(root, { autoAlpha: 1 })
     if (tabs && !tabsShown.current) {
       tabsShown.current = true
-      tl.fromTo(tabs, { y: -10, opacity: 0 }, { y: 0, opacity: 1, duration: reduce ? 0 : 0.4, ease: 'power2.out' }, 0)
+      tl.fromTo(
+        tabs,
+        { y: -14, opacity: 0, filter: reduce ? 'none' : 'blur(12px)' },
+        { y: 0, opacity: 1, filter: 'blur(0px)', duration: reduce ? 0 : 0.52, ease: 'expo.out' },
+        0,
+      )
     }
     list.forEach((card, index) => {
-      const at = reduce ? 0 : 0.05 + index * 0.08
+      const at = reduce ? 0 : 0.05 + index * 0.07
       tl.fromTo(card, {
-        x: -46,
+        y: 36,
+        x: -18,
         opacity: 0,
-        scale: 0.9,
+        scale: 0.88,
+        filter: reduce ? 'none' : 'blur(16px)',
       }, {
+        y: 0,
         x: 0,
         opacity: 1,
         scale: 1,
-        duration: reduce ? 0 : 0.58,
-        ease: 'back.out(1.55)',
+        filter: 'blur(0px)',
+        duration: reduce ? 0 : 0.68,
+        ease: 'expo.out',
       }, at)
       const bits = card.querySelectorAll('.challenge-bit')
-      tl.fromTo(bits, { y: 10, opacity: 0 }, {
+      tl.fromTo(bits, { y: 12, opacity: 0 }, {
         y: 0,
         opacity: 1,
-        duration: reduce ? 0 : 0.36,
-        stagger: reduce ? 0 : 0.04,
+        duration: reduce ? 0 : 0.4,
+        stagger: reduce ? 0 : 0.035,
         ease: 'power3.out',
-      }, at + (reduce ? 0 : 0.08))
+      }, at + (reduce ? 0 : 0.1))
     })
     return () => {
       tl.kill()

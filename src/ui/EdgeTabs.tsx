@@ -8,7 +8,7 @@ import {
   Eye,
   FlaskConical,
   Gem,
-  ArrowLeft,
+  X,
   Shield,
   Sparkles,
   Swords,
@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import gsap from 'gsap'
+import { useBuddy } from '../../Game engine/mechanics/store'
 import { AbilityCarousel } from './AbilityCarousel'
 import { ChallengeBoard } from './ChallengeBoard'
 import { FieldBoard } from './FieldBoard'
@@ -271,6 +272,7 @@ function Panel({
   label,
   tabClass,
   onClick,
+  quiet = false,
 }: {
   className: string
   motion: { rootRef: RefObject<HTMLDivElement | null>; open: () => void; close: () => void; dismiss: () => void }
@@ -278,9 +280,10 @@ function Panel({
   label: string
   tabClass: string
   onClick: () => void
+  quiet?: boolean
 }) {
   return (
-    <div className={className} ref={motion.rootRef} onPointerEnter={motion.open} onPointerLeave={motion.close}>
+    <div className={className} ref={motion.rootRef} onPointerEnter={quiet ? undefined : motion.open} onPointerLeave={quiet ? undefined : motion.close}>
       <div className="edge-slide">
         <span className="card-shade" aria-hidden="true" />
         {children}
@@ -288,6 +291,11 @@ function Panel({
           type="button"
           className={tabClass}
           onClick={(event) => {
+            if (quiet) {
+              onClick()
+              event.currentTarget.blur()
+              return
+            }
             onClick()
             motion.dismiss()
             slideEdges(true)
@@ -303,7 +311,8 @@ function Panel({
 
 type EdgeId = 'challenges' | 'stats' | 'abilities'
 
-export function EdgeTabs({ fold, onSelect, onReturn, onPick, onSurface }: { fold: number; onSelect: (id: EdgeId) => void; onReturn: () => void; onPick: (open: boolean) => void; onSurface: (surface: 'board' | 'field' | 'play' | null) => void }) {
+export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurface, onLocked }: { fold: number; openSheet?: { id: 'stats' | 'abilities'; n: number } | null; onSelect: (id: EdgeId) => void; onReturn: () => void; onPick: (open: boolean) => void; onSurface: (surface: 'board' | 'field' | 'play' | null) => void; onLocked: () => void }) {
+  const hatched = Boolean(useBuddy().active)
   const challenges = usePanelMotion('.edge-tab--left', '.mission-card', -34, 0)
   const sheet = usePanelMotion('.edge-tab--bottom', '.panel-card', 0, 28)
   const [boardOpen, setBoardOpen] = useState(false)
@@ -311,6 +320,8 @@ export function EdgeTabs({ fold, onSelect, onReturn, onPick, onSurface }: { fold
   const [playOpen, setPlayOpen] = useState(false)
   const [closePlay, setClosePlay] = useState(0)
   const [lane, setLane] = useState<'stats' | 'challenges' | 'abilities'>('stats')
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const showTitle = boardOpen && (lane === 'stats' || lane === 'abilities')
 
   useEffect(() => {
     if (!fold) return
@@ -321,13 +332,53 @@ export function EdgeTabs({ fold, onSelect, onReturn, onPick, onSurface }: { fold
   }, [fold])
 
   useEffect(() => {
+    if (!openSheet) return
+    challenges.dismiss()
+    sheet.dismiss()
+    onSelect(openSheet.id)
+    setLane(openSheet.id)
+    setFieldOpen(false)
+    setBoardOpen(true)
+    setClosePlay((value) => value + 1)
+    slideEdges(true)
+  }, [openSheet])
+
+  useEffect(() => {
     if (boardOpen || fieldOpen) return
-    showReturn(playOpen)
+    showReturn(false)
   }, [playOpen, boardOpen, fieldOpen])
 
   useEffect(() => {
     onSurface(boardOpen ? 'board' : fieldOpen ? 'field' : playOpen ? 'play' : null)
   }, [boardOpen, fieldOpen, playOpen, onSurface])
+
+  useLayoutEffect(() => {
+    const title = titleRef.current
+    if (!title) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    gsap.killTweensOf(title)
+    if (!showTitle) {
+      gsap.to(title, {
+        autoAlpha: 0,
+        x: -18,
+        filter: reduce ? 'none' : 'blur(12px)',
+        duration: reduce ? 0 : 0.34,
+        ease: 'power3.in',
+      })
+      return
+    }
+    gsap.fromTo(
+      title,
+      { autoAlpha: 0, x: -28, filter: reduce ? 'none' : 'blur(16px)' },
+      {
+        autoAlpha: 1,
+        x: 0,
+        filter: 'blur(0px)',
+        duration: reduce ? 0 : 0.7,
+        ease: 'expo.out',
+      },
+    )
+  }, [showTitle, lane])
 
   function liftReturn(event: ReactPointerEvent<HTMLDivElement>) {
     const root = event.currentTarget
@@ -372,6 +423,7 @@ export function EdgeTabs({ fold, onSelect, onReturn, onPick, onSurface }: { fold
         <button
           type="button"
           className="return-button"
+          aria-label="Close"
           onClick={(event) => {
             const root = event.currentTarget.parentElement
             gsap.to(event.currentTarget, { scale: 1, '--lift': 0, duration: 0.3, ease: 'power2.inOut', overwrite: 'auto' })
@@ -383,12 +435,16 @@ export function EdgeTabs({ fold, onSelect, onReturn, onPick, onSurface }: { fold
             onReturn()
           }}
         >
-          <ArrowLeft strokeWidth={1.75} aria-hidden="true" />
-          Return
+          <X strokeWidth={1.75} aria-hidden="true" />
         </button>
       </div>
+      <h1 className="view-title" ref={titleRef}>
+        {lane === 'stats' ? 'Stats' : lane === 'abilities' ? 'Abilities' : 'Stats'}
+      </h1>
       <ModeSelect
         hidden={boardOpen || fieldOpen}
+        locked={!hatched}
+        onLocked={onLocked}
         closePlay={closePlay}
         onPick={(open) => {
           setPlayOpen(open)
@@ -412,11 +468,11 @@ export function EdgeTabs({ fold, onSelect, onReturn, onPick, onSurface }: { fold
           slideEdges(true)
         }}
       />
-      <ChallengeBoard open={boardOpen} />
+      <ChallengeBoard open={boardOpen && lane === 'challenges'} />
       <FieldBoard open={fieldOpen} />
-      <StatSheet open={boardOpen} />
-      <AbilityCarousel open={boardOpen} kind={lane === 'challenges' ? 'life' : 'abilities'} />
-      <Panel className={`edge-challenges${boardOpen || fieldOpen ? ' is-quiet' : ''}`} motion={challenges} label="Challenges" tabClass="edge-tab edge-tab--left" onClick={() => { onSelect('challenges'); setLane('challenges'); setFieldOpen(false); setBoardOpen(true) }}>
+      <StatSheet open={boardOpen && lane === 'stats'} />
+      <AbilityCarousel open={boardOpen && lane !== 'stats'} kind={lane === 'challenges' ? 'life' : 'abilities'} />
+      <Panel quiet={!hatched} className={`edge-challenges${boardOpen || fieldOpen ? ' is-quiet' : ''}`} motion={challenges} label="Challenges" tabClass="edge-tab edge-tab--left" onClick={() => { if (!hatched) { onLocked(); return } onSelect('challenges'); setLane('challenges'); setFieldOpen(false); setBoardOpen(true) }}>
         <div className="challenges-pop" data-pop>
           {MISSIONS.map((mission) => {
             const Icon = mission.icon
