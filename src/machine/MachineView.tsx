@@ -84,7 +84,8 @@ export function MachineView() {
 
   const buddy = api.active
   const [info, setInfo] = useState(false)
-  const [surface, setSurface] = useState<'board' | 'field' | 'play' | null>(null)
+  const [surface, setSurface] = useState<'board' | 'field' | 'play' | 'challenges' | null>(null)
+  const [shopOpen, setShopOpen] = useState(false)
   const [purseOpen, setPurseOpen] = useState(false)
   const [fold, setFold] = useState(0)
   const [sheetOpen, setSheetOpen] = useState<{ id: 'stats' | 'abilities'; n: number } | null>(null)
@@ -157,10 +158,23 @@ export function MachineView() {
     edgeRef.current = id
     setPurseOpen(false)
     if (id === 'stats') {
+      worldRef.current?.setPick(false)
       worldRef.current?.setPull(true, 'hero')
       return
     }
+    if (id === 'abilities') {
+      worldRef.current?.setPick(false)
+      worldRef.current?.setPull(true)
+      return
+    }
     worldRef.current?.setPull(true)
+  }
+
+  function centerChallenges(open: boolean) {
+    if (!open) return
+    worldRef.current?.setPull(false)
+    worldRef.current?.faceFront()
+    worldRef.current?.setPick(true)
   }
 
   function togglePurse() {
@@ -255,7 +269,7 @@ export function MachineView() {
   }, [])
 
   return (
-    <div className={`machine-page${buddy ? '' : ' is-empty'}${surface === 'board' ? ' is-board' : ''}${surface === 'field' ? ' is-field' : ''}${surface === 'play' ? ' is-play' : ''}`} style={{ ['--case-mark' as string]: String(api.perks.mark) }}>
+    <div className={`machine-page${buddy ? '' : ' is-empty'}${surface === 'board' ? ' is-board' : ''}${surface === 'field' ? ' is-field' : ''}${surface === 'play' ? ' is-play' : ''}${surface === 'challenges' ? ' is-challenges' : ''}${shopOpen ? ' is-shop' : ''}`} style={{ ['--case-mark' as string]: String(api.perks.mark) }}>
       <div ref={mountRef} className="machine-stage" />
       <div ref={stickerRef} className="rarity-sticker" aria-hidden="true" />
       <HouseTape />
@@ -265,6 +279,14 @@ export function MachineView() {
         onOpenSheet={(id) => {
           onEdge(id)
           setSheetOpen({ id, n: Date.now() })
+        }}
+        onShop={(open) => {
+          setShopOpen(open)
+          if (open) {
+            worldRef.current?.setPick(true)
+            return
+          }
+          worldRef.current?.setPick(edgeRef.current === 'challenges' && (surface === 'board' || surface === 'challenges'))
         }}
       />
       <AiCredit />
@@ -343,6 +365,7 @@ export function MachineView() {
         onSelect={onEdge}
         onReturn={onReturn}
         onPick={(open) => worldRef.current?.setPick(open)}
+        onCenter={centerChallenges}
         onSurface={setSurface}
         onLocked={() => setGateOpen(true)}
       />

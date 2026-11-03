@@ -231,6 +231,7 @@
 
 .prompt-bar__msg {
   display: flex;
+  flex: none;
   align-items: flex-start;
   gap: 8px;
   width: 100%;

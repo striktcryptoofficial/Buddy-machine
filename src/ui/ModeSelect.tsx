@@ -91,6 +91,7 @@ export function ModeSelect({
   onArena,
   onField,
   onPick,
+  onOpenPlay,
   locked = false,
   onLocked,
 }: {
@@ -99,6 +100,7 @@ export function ModeSelect({
   onArena: () => void
   onField: () => void
   onPick: (open: boolean) => void
+  onOpenPlay?: () => void
   locked?: boolean
   onLocked?: () => void
 }) {
@@ -135,8 +137,8 @@ export function ModeSelect({
           if (pop instanceof HTMLElement) pop.style.pointerEvents = 'none'
         },
       })
-      tl.to(button, { scale: 1.06, '--lift': 1, duration: reduce ? 0 : 0.45, ease: 'power2.out' }, 0)
-      if (shade) tl.to(shade, { scale: 1.06, opacity: 1, duration: reduce ? 0 : 0.45, ease: 'power2.out' }, 0)
+      tl.to(button, { '--lift': 1, duration: reduce ? 0 : 0.45, ease: 'power2.out' }, 0)
+      if (shade) tl.to(shade, { opacity: 1, duration: reduce ? 0 : 0.45, ease: 'power2.out' }, 0)
       cards.forEach((row, index) => {
         const at = reduce ? 0 : 0.06 + index * 0.07
         tl.fromTo(row, { y: -28, scale: 0.82, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: reduce ? 0 : 0.62, ease: 'back.out(1.7)' }, at)
@@ -265,7 +267,9 @@ export function ModeSelect({
               onLocked?.()
               return
             }
-            setPicking((open) => !open)
+            const next = !picking
+            if (next) onOpenPlay?.()
+            setPicking(next)
           }}
         >
           <Play strokeWidth={1.75} aria-hidden="true" />

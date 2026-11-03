@@ -425,11 +425,18 @@ const PromptBar: React.FC<PromptBarProps> = ({
     setShut(Math.ceil(dock.offsetHeight + pad + gap));
   }, [draft, attachments.length, listening]);
 
+  const lastKey = messages.at(-1)?.key ?? '';
+  const stickRef = useRef(true);
+
+  useLayoutEffect(() => {
+    if (raised) stickRef.current = true;
+  }, [raised]);
+
   useLayoutEffect(() => {
     const el = threadRef.current;
-    if (!el || !raised) return;
+    if (!el || !raised || !stickRef.current) return;
     el.scrollTop = el.scrollHeight;
-  }, [raised, messages, pending]);
+  }, [raised, lastKey, messages.length, pending]);
 
   useLayoutEffect(() => {
     const el = inputRef.current;
@@ -717,7 +724,15 @@ const PromptBar: React.FC<PromptBarProps> = ({
         onClick={focusInput}
       >
         <canvas ref={sparkRef} className="prompt-bar__sparks" aria-hidden="true" />
-        <div className="prompt-bar__thread" ref={threadRef}>
+        <div
+          className="prompt-bar__thread"
+          ref={threadRef}
+          onWheel={event => event.stopPropagation()}
+          onScroll={event => {
+            const el = event.currentTarget;
+            stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+          }}
+        >
           {messages.length === 0 && !pending
             ? SAMPLE_CHAT.map((message, index) => (
                 <ChatMessage key={`sample-${index}`} role={message.role} text={message.text} cat={cat} catName={catName} youLabel={youLabel} />

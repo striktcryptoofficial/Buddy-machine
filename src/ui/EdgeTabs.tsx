@@ -7,6 +7,7 @@ import {
   Dumbbell,
   Eye,
   FlaskConical,
+  ArrowLeft,
   Gem,
   X,
   Shield,
@@ -99,7 +100,7 @@ function Dots({ filled }: { filled: number }) {
   )
 }
 
-function usePanelMotion(button: string, card: string, fromX: number, fromY: number) {
+function usePanelMotion(button: string, card: string, fromX: number, fromY: number, grow = true) {
   const rootRef = useRef<HTMLDivElement>(null)
   const timeline = useRef<gsap.core.Timeline | null>(null)
 
@@ -119,14 +120,14 @@ function usePanelMotion(button: string, card: string, fromX: number, fromY: numb
         },
       })
       tl.to(tab, {
-        scale: 1.06,
+        ...(grow ? { scale: 1.06 } : {}),
         '--lift': 1,
         duration: reduce ? 0 : 0.45,
         ease: 'power2.out',
       }, 0)
       if (shade) {
         tl.to(shade, {
-          scale: 1.06,
+          ...(grow ? { scale: 1.06 } : {}),
           opacity: 1,
           duration: reduce ? 0 : 0.45,
           ease: 'power2.out',
@@ -273,6 +274,7 @@ function Panel({
   tabClass,
   onClick,
   quiet = false,
+  stay = false,
 }: {
   className: string
   motion: { rootRef: RefObject<HTMLDivElement | null>; open: () => void; close: () => void; dismiss: () => void }
@@ -281,6 +283,7 @@ function Panel({
   tabClass: string
   onClick: () => void
   quiet?: boolean
+  stay?: boolean
 }) {
   return (
     <div className={className} ref={motion.rootRef} onPointerEnter={quiet ? undefined : motion.open} onPointerLeave={quiet ? undefined : motion.close}>
@@ -298,7 +301,7 @@ function Panel({
             }
             onClick()
             motion.dismiss()
-            slideEdges(true)
+            if (!stay) slideEdges(true)
             event.currentTarget.blur()
           }}
         >
@@ -311,9 +314,9 @@ function Panel({
 
 type EdgeId = 'challenges' | 'stats' | 'abilities'
 
-export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurface, onLocked }: { fold: number; openSheet?: { id: 'stats' | 'abilities'; n: number } | null; onSelect: (id: EdgeId) => void; onReturn: () => void; onPick: (open: boolean) => void; onSurface: (surface: 'board' | 'field' | 'play' | null) => void; onLocked: () => void }) {
+export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onCenter, onSurface, onLocked }: { fold: number; openSheet?: { id: 'stats' | 'abilities'; n: number } | null; onSelect: (id: EdgeId) => void; onReturn: () => void; onPick: (open: boolean) => void; onCenter: (open: boolean) => void; onSurface: (surface: 'board' | 'field' | 'play' | 'challenges' | null) => void; onLocked: () => void }) {
   const hatched = Boolean(useBuddy().active)
-  const challenges = usePanelMotion('.edge-tab--left', '.mission-card', -34, 0)
+  const challenges = usePanelMotion('.edge-tab--left', '.mission-card', -34, 0, false)
   const sheet = usePanelMotion('.edge-tab--bottom', '.panel-card', 0, 28)
   const [boardOpen, setBoardOpen] = useState(false)
   const [fieldOpen, setFieldOpen] = useState(false)
@@ -321,7 +324,12 @@ export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurfac
   const [closePlay, setClosePlay] = useState(0)
   const [lane, setLane] = useState<'stats' | 'challenges' | 'abilities'>('stats')
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const onPickRef = useRef(onPick)
+  const onCenterRef = useRef(onCenter)
+  const playVeilRef = useRef(false)
   const showTitle = boardOpen && (lane === 'stats' || lane === 'abilities')
+  onPickRef.current = onPick
+  onCenterRef.current = onCenter
 
   useEffect(() => {
     if (!fold) return
@@ -349,8 +357,17 @@ export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurfac
   }, [playOpen, boardOpen, fieldOpen])
 
   useEffect(() => {
-    onSurface(boardOpen ? 'board' : fieldOpen ? 'field' : playOpen ? 'play' : null)
+    onSurface(boardOpen && lane === 'challenges' ? 'challenges' : boardOpen ? 'board' : fieldOpen ? 'field' : playOpen ? 'play' : null)
   }, [boardOpen, fieldOpen, playOpen, onSurface])
+
+  useLayoutEffect(() => {
+    const challenges = boardOpen && lane === 'challenges' && !fieldOpen
+    if (challenges) {
+      onCenterRef.current(true)
+      return
+    }
+    onPickRef.current(playVeilRef.current)
+  }, [boardOpen, lane, fieldOpen, playOpen])
 
   useLayoutEffect(() => {
     const title = titleRef.current
@@ -442,13 +459,17 @@ export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurfac
         {lane === 'stats' ? 'Stats' : lane === 'abilities' ? 'Abilities' : 'Stats'}
       </h1>
       <ModeSelect
-        hidden={boardOpen || fieldOpen}
+        hidden={(boardOpen && lane !== 'challenges') || fieldOpen}
         locked={!hatched}
         onLocked={onLocked}
         closePlay={closePlay}
+        onOpenPlay={() => {
+          setBoardOpen(false)
+          setFieldOpen(false)
+        }}
         onPick={(open) => {
+          playVeilRef.current = open
           setPlayOpen(open)
-          onPick(open)
         }}
         onArena={() => {
           challenges.dismiss()
@@ -457,7 +478,8 @@ export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurfac
           setLane('challenges')
           setFieldOpen(false)
           setBoardOpen(true)
-          slideEdges(true)
+          setClosePlay((value) => value + 1)
+          slideEdges(false)
         }}
         onField={() => {
           challenges.dismiss()
@@ -468,16 +490,16 @@ export function EdgeTabs({ fold, openSheet, onSelect, onReturn, onPick, onSurfac
           slideEdges(true)
         }}
       />
-      <ChallengeBoard open={boardOpen && lane === 'challenges'} />
+      <ChallengeBoard open={boardOpen && lane === 'challenges'} onBack={() => { setBoardOpen(false); slideEdges(false); onReturn() }} />
       <FieldBoard open={fieldOpen} />
       <StatSheet open={boardOpen && lane === 'stats'} />
-      <AbilityCarousel open={boardOpen && lane !== 'stats'} kind={lane === 'challenges' ? 'life' : 'abilities'} />
-      <Panel quiet={!hatched} className={`edge-challenges${boardOpen || fieldOpen ? ' is-quiet' : ''}`} motion={challenges} label="Challenges" tabClass="edge-tab edge-tab--left" onClick={() => { if (!hatched) { onLocked(); return } onSelect('challenges'); setLane('challenges'); setFieldOpen(false); setBoardOpen(true) }}>
+      <AbilityCarousel open={boardOpen && lane === 'abilities'} kind="abilities" />
+      <Panel quiet={!hatched} stay className={`edge-challenges${(boardOpen && lane !== 'challenges') || fieldOpen ? ' is-quiet' : ''}`} motion={challenges} label="Challenges" tabClass="edge-tab edge-tab--left" onClick={() => { if (!hatched) { onLocked(); return } if (boardOpen && lane === 'challenges') { setBoardOpen(false); slideEdges(false); onReturn(); return } onSelect('challenges'); setLane('challenges'); setFieldOpen(false); setBoardOpen(true); setClosePlay((value) => value + 1); slideEdges(false) }}>
         <div className="challenges-pop" data-pop>
           {MISSIONS.map((mission) => {
             const Icon = mission.icon
             return (
-              <button type="button" className="mission-card panel-card" key={mission.code} aria-label={`${mission.name}. ${mission.meta}`} onClick={(event) => { event.stopPropagation(); if (mission.href === '/arena') { onSelect('challenges'); setLane('challenges'); setFieldOpen(false); setBoardOpen(true) } else { setBoardOpen(false); setFieldOpen(true) } }} onPointerEnter={liftCard} onPointerLeave={dropCard}>
+              <button type="button" className="mission-card panel-card" key={mission.code} aria-label={`${mission.name}. ${mission.meta}`} onClick={(event) => { event.stopPropagation(); if (mission.href === '/arena') { onSelect('challenges'); setLane('challenges'); setFieldOpen(false); setBoardOpen(true); setClosePlay((value) => value + 1); slideEdges(false) } else { setBoardOpen(false); setFieldOpen(true); slideEdges(true) } }} onPointerEnter={liftCard} onPointerLeave={dropCard}>
                 <span className="card-shade" aria-hidden="true" />
                 <div className="card-face">
                   <Icon className="panel-bit" strokeWidth={1.75} aria-hidden="true" />

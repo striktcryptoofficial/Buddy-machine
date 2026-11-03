@@ -244,4 +244,6 @@ export interface Save {
   seasonScraps: number
   seasonPlays: number
   seasonClaimed: boolean
+  /** Stacked shop goods. Charms stay on the body and in the pouch. */
+  bag?: Record<string, number>
 }

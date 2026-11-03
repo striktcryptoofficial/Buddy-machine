@@ -313,6 +313,10 @@
   text-shadow: none;
 }
 
+.challenge-board .challenge-promo__facts em {
+  color: rgba(28, 30, 34, 0.72);
+}
+
 .challenge-board .challenge-prize strong,
 .challenge-board .challenge-card:has([data-kicker="Throne"]) .challenge-prize strong,
 .challenge-board .challenge-promo__facts span:first-child strong {

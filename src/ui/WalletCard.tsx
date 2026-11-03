@@ -3,7 +3,7 @@ import { Award, Bell, Check, Compass, Copy, Gem, Moon, Sparkles, Swords, Zap, ty
 import gsap from 'gsap'
 import { PixelCat } from '../../Game engine/creatures/cat/PixelCat'
 import { useBuddy } from '../../Game engine/mechanics/store'
-import { PurseSheet } from './PurseSheet'
+import { PurseSheet, ShopModal } from './PurseSheet'
 import './cards/play.css'
 
 const SOL_BALANCE = '4.82'
@@ -83,6 +83,23 @@ const NOTES: {
 
 const NOTE_NEW = NOTES.filter((note) => note.unread).length
 
+function bindPaneWheel(root: HTMLElement | null, pane?: HTMLElement | null) {
+  if (!root) return
+  const scroller = pane ?? root
+  function onWheel(event: WheelEvent) {
+    const max = scroller.scrollHeight - scroller.clientHeight
+    if (max <= 1) return
+    event.preventDefault()
+    event.stopPropagation()
+    let delta = event.deltaY
+    if (event.deltaMode === 1) delta *= 16
+    else if (event.deltaMode === 2) delta *= scroller.clientHeight
+    scroller.scrollTop = Math.max(0, Math.min(max, scroller.scrollTop + delta))
+  }
+  root.addEventListener('wheel', onWheel, { passive: false })
+  return () => root.removeEventListener('wheel', onWheel)
+}
+
 function BuddyMark() {
   return <img className="wallet-card__buddy" src="/b-logo%20black.svg" alt="" />
 }
@@ -112,10 +129,12 @@ export function WalletCard({
   open,
   onPurse,
   onOpenSheet,
+  onShop,
 }: {
   open: boolean
   onPurse: () => void
   onOpenSheet?: (id: 'stats' | 'abilities') => void
+  onShop?: (open: boolean) => void
 }) {
   const api = useBuddy()
   const buddy = api.active
@@ -126,7 +145,20 @@ export function WalletCard({
   const connected = Boolean(address)
   const [copied, setCopied] = useState(false)
   const [notes, setNotes] = useState(false)
+  const [shop, setShop] = useState(false)
+
+  function openShop() {
+    setShop(true)
+    onShop?.(true)
+    if (open) onPurse()
+  }
+
+  function closeShop() {
+    setShop(false)
+    onShop?.(false)
+  }
   const [dropLive, setDropLive] = useState(false)
+  const collapseRef = useRef(false)
   const [notesLive, setNotesLive] = useState(false)
   const dropOn = open && connected
 
@@ -164,6 +196,22 @@ export function WalletCard({
     gsap.killTweensOf([root, rows, lanes, innards, purse])
     if (!dropOn) {
       root.style.pointerEvents = 'none'
+      const collapse = collapseRef.current
+      collapseRef.current = false
+      if (collapse) {
+        root.style.overflow = 'hidden'
+        root.style.transformOrigin = 'top right'
+        gsap.to(root, {
+          scaleY: 0,
+          duration: reduce ? 0 : 0.42,
+          ease: 'power3.out',
+          onComplete() {
+            gsap.set(root, { autoAlpha: 0, clearProps: 'transform,overflow' })
+            setDropLive(false)
+          },
+        })
+        return
+      }
       gsap.to([innards, purse], { opacity: 0, duration: reduce ? 0 : 0.14, stagger: reduce ? 0 : 0.006, ease: 'power2.in' })
       gsap.to(lanes, { y: 12, opacity: 0, duration: reduce ? 0 : 0.26, stagger: reduce ? 0 : 0.04, ease: 'power3.in' })
       gsap.to(rows, { y: 8, opacity: 0, duration: reduce ? 0 : 0.22, stagger: reduce ? 0 : 0.03, ease: 'power2.in' })
@@ -180,7 +228,7 @@ export function WalletCard({
       return
     }
     root.style.pointerEvents = 'auto'
-    gsap.set(root, { autoAlpha: 1, clearProps: 'filter,scale' })
+    gsap.set(root, { autoAlpha: 1, scaleY: 1, clearProps: 'transform,filter,overflow' })
     gsap.fromTo(root, { y: -12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: reduce ? 0 : 0.5, ease: 'expo.out' })
     gsap.fromTo(
       rows,
@@ -237,6 +285,17 @@ export function WalletCard({
   }, [notes])
 
   useEffect(() => {
+    if (!notes) return undefined
+    const root = notesRef.current
+    return bindPaneWheel(root, root?.querySelector<HTMLElement>('.wallet-notes__list'))
+  }, [notes])
+
+  useEffect(() => {
+    if (!dropOn) return undefined
+    return bindPaneWheel(dropRef.current?.querySelector<HTMLElement>('.purse-sheet__grid') ?? null)
+  }, [dropOn])
+
+  useEffect(() => {
     if (!notes) return
     const onDown = (event: PointerEvent) => {
       const node = event.target
@@ -260,6 +319,7 @@ export function WalletCard({
       const node = event.target
       if (node instanceof Node && cardRef.current?.contains(node)) return
       if (node instanceof Element && node.closest('.shop-modal')) return
+      collapseRef.current = node instanceof Element && Boolean(node.closest('.machine-prompt, .prompt-bar'))
       onPurse()
     }
     const onKey = (event: KeyboardEvent) => {
@@ -390,7 +450,7 @@ export function WalletCard({
               <span className="wallet-drop__lane-foot">Open</span>
             </button>
           </div>
-          <PurseSheet />
+          <PurseSheet onOpenShop={openShop} />
         </div>
       ) : null}
       {notes || notesLive ? (
@@ -432,6 +492,7 @@ export function WalletCard({
           </div>
         </div>
       ) : null}
+      {shop ? <ShopModal onClose={closeShop} /> : null}
     </aside>
   )
 }

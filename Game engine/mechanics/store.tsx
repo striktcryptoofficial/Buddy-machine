@@ -34,6 +34,7 @@ import { enterTable, fightPair, claimSeason, lieDown, rise, sendOut, type FightO
 import { walletSeed } from './table'
 import { pourBowl, sipBowl } from './bowl'
 import { buyCharm, unequipCharm, wearPouch } from './market'
+import { settle, type CartLine } from './catalog'
 import { seasonReport } from './season'
 import type { CharmId } from './house'
 
@@ -114,6 +115,7 @@ function empty(): Save {
     seasonScraps: 0,
     seasonPlays: 0,
     seasonClaimed: false,
+    bag: {},
   }
 }
 
@@ -170,6 +172,7 @@ function clearSave(save: Save) {
   save.seasonScraps = 0
   save.seasonPlays = 0
   save.seasonClaimed = false
+  save.bag = {}
   lifeRevision = 0
 }
 
@@ -268,6 +271,7 @@ function adoptRemoteSave(target: Save, remote: Save) {
   target.seasonScraps = remote.seasonScraps ?? 0
   target.seasonPlays = remote.seasonPlays ?? 0
   target.seasonClaimed = remote.seasonClaimed ?? false
+  target.bag = remote.bag ?? {}
   target.buddies = [kept]
   target.activeId = kept.id
   return true
@@ -342,6 +346,8 @@ interface BuddyApi {
   rise: () => string
   pour: (amount: number) => string
   buy: (id: CharmId) => string
+  bag: Record<string, number>
+  checkout: (lines: CartLine[]) => string
   unequip: () => string
   wear: () => string
   claimSeason: () => string
@@ -646,6 +652,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       },
       charm: save.charm ?? null,
       pouch: save.pouch ?? null,
+      bag: save.bag ?? {},
       bowl: save.bowl ?? 0,
       explorations: save.explorations ?? 0,
       reign: save.reign ?? null,
@@ -704,6 +711,21 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
         if (active) active.reason = line
         touch()
         return line
+      },
+      checkout: (lines) => {
+        const next = settle(save.holdings ?? 0, save.charm ?? null, save.pouch ?? null, save.bag ?? {}, lines)
+        if (!next.ok) {
+          if (active) active.reason = next.reason
+          bump()
+          return next.reason
+        }
+        save.holdings = next.holdings
+        save.charm = next.charm
+        save.pouch = next.pouch
+        save.bag = next.bag
+        if (active) active.reason = next.line
+        touch()
+        return next.line
       },
       unequip: () => {
         const next = unequipCharm(save.charm ?? null, save.pouch ?? null)

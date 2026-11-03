@@ -1,5 +1,7 @@
 import { useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import gsap from 'gsap'
+import { titlesFor } from '../../Game engine/mechanics/house'
 import { useBuddy } from '../../Game engine/mechanics/store'
 import './cards/challenge.css'
 
@@ -201,7 +203,7 @@ function CardFace({ card }: { card: Card }) {
         </span>
       </div>
       <p className="challenge-detail challenge-bit">{card.detail}</p>
-      <dl className="challenge-rows">
+      <dl className={card.id === 'gate-king' ? 'challenge-rows is-pair' : 'challenge-rows'}>
         {card.rows.map((row) => (
           <div key={`${card.id}-${row.label}-${row.value}`} className="challenge-bit">
             <dt>{row.label}</dt>
@@ -211,6 +213,56 @@ function CardFace({ card }: { card: Card }) {
       </dl>
     </div>
   )
+}
+
+function recordRows(api: ReturnType<typeof useBuddy>) {
+  const buddy = api.active
+  if (!buddy) return []
+  const titles = titlesFor(buddy, api.explorations, Date.now())
+  const asleep = Boolean(buddy.restUntil && Date.now() < buddy.restUntil)
+  const gate = buddy.action !== 'sleep' && buddy.needs.energy >= 0.2 && buddy.needs.hunger <= 0.82
+  return [
+    {
+      code: 'BH',
+      name: 'Battle-hardened',
+      line: 'A hundred scraps',
+      meta: `${buddy.scrapCount} / 100`,
+      state: titles.includes('battle-hardened') ? 'Earned' : 'Quiet',
+      on: titles.includes('battle-hardened'),
+    },
+    {
+      code: 'EX',
+      name: 'Explorer',
+      line: 'Twelve trips',
+      meta: `${api.explorations} / 12`,
+      state: titles.includes('explorer') ? 'Earned' : 'Quiet',
+      on: titles.includes('explorer'),
+    },
+    {
+      code: 'OH',
+      name: 'Old house',
+      line: 'A long kept life',
+      meta: `${buddy.careDays.length} / 12`,
+      state: titles.includes('old-house') ? 'Earned' : 'Quiet',
+      on: titles.includes('old-house'),
+    },
+    {
+      code: 'SCR',
+      name: 'Scrap',
+      line: 'Awake, fed, with energy left',
+      meta: `${Math.round(buddy.needs.energy * 100)}% energy`,
+      state: gate ? 'Open' : 'Closed',
+      on: gate,
+    },
+    {
+      code: 'RST',
+      name: 'Rest',
+      line: 'One day asleep',
+      meta: asleep ? 'Down' : 'Up',
+      state: asleep ? 'Asleep' : 'Awake',
+      on: !asleep,
+    },
+  ]
 }
 
 function fightFor(api: ReturnType<typeof useBuddy>, id: string) {
@@ -244,7 +296,7 @@ function dropCard(event: ReactPointerEvent<HTMLElement>) {
   })
 }
 
-export function ChallengeBoard({ open }: { open: boolean }) {
+export function ChallengeBoard({ open, onBack }: { open: boolean; onBack: () => void }) {
   const api = useBuddy()
   const rootRef = useRef<HTMLDivElement>(null)
   const tabsShown = useRef(false)
@@ -252,12 +304,15 @@ export function ChallengeBoard({ open }: { open: boolean }) {
   const showingGates = picked === null
   const live = liveCards(api)
   const cards = showingGates ? GATES : picked === 'all' ? Object.values(live).flat() : live[picked]
+  const record = recordRows(api)
 
   useLayoutEffect(() => {
     const root = rootRef.current
     if (!root) return
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const list = gsap.utils.toArray<HTMLElement>('.challenge-card', root)
+    const record = root.querySelector<HTMLElement>('.challenge-record')
+    const recordBits = root.querySelectorAll<HTMLElement>('.challenge-record__head > *, .challenge-record li')
     const tabs = root.querySelector('.challenge-tabs')
     const scroller = root.querySelector('.challenge-list')
     if (scroller instanceof HTMLElement) scroller.scrollTop = 0
@@ -270,6 +325,8 @@ export function ChallengeBoard({ open }: { open: boolean }) {
       gsap.killTweensOf([...faces, ...shades])
       gsap.set(faces, { scale: 1, '--lift': 0, overwrite: true })
       gsap.set(shades, { scale: 1, opacity: 0, overwrite: true })
+      gsap.to(recordBits, { y: 8, opacity: 0, duration: reduce ? 0 : 0.16, stagger: reduce ? 0 : 0.02, ease: 'power2.in' })
+      if (record) gsap.to(record, { y: 24, scale: 1, opacity: 0, duration: reduce ? 0 : 0.32, ease: 'power3.in' })
       gsap.to(list, {
         y: 24,
         scale: 0.92,
@@ -310,6 +367,7 @@ export function ChallengeBoard({ open }: { open: boolean }) {
         filter: 'blur(0px)',
         duration: reduce ? 0 : 0.68,
         ease: 'expo.out',
+        immediateRender: true,
       }, at)
       const bits = card.querySelectorAll('.challenge-bit')
       tl.fromTo(bits, { y: 12, opacity: 0 }, {
@@ -318,34 +376,42 @@ export function ChallengeBoard({ open }: { open: boolean }) {
         duration: reduce ? 0 : 0.4,
         stagger: reduce ? 0 : 0.035,
         ease: 'power3.out',
+        immediateRender: true,
       }, at + (reduce ? 0 : 0.1))
     })
+    if (record) {
+      gsap.killTweensOf([record, ...recordBits])
+      gsap.set([record, ...recordBits], { scale: 1, filter: 'none', clearProps: 'filter' })
+      tl.fromTo(record, {
+        y: 36,
+        scale: 1,
+        opacity: 0,
+      }, {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: reduce ? 0 : 0.68,
+        ease: 'expo.out',
+        immediateRender: true,
+      }, reduce ? 0 : 0.05)
+      tl.fromTo(recordBits, { opacity: 0 }, {
+        opacity: 1,
+        duration: reduce ? 0 : 0.4,
+        stagger: reduce ? 0 : 0.035,
+        ease: 'power3.out',
+        immediateRender: true,
+      }, reduce ? 0 : 0.15)
+    }
     return () => {
       tl.kill()
     }
   }, [open, picked])
 
   return (
-    <section className={`challenge-board${open ? ' is-lifted' : ''}`} ref={rootRef} aria-hidden={open ? undefined : true}>
-      {picked !== null && (
-        <div className="challenge-tabs card-face" role="tablist" aria-label="Challenges">
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={picked === item.id}
-              className={picked === item.id ? 'is-on' : ''}
-              onClick={() => setPicked(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
-      <div className={`challenge-list${showingGates ? ' is-gates' : ''}`}>
-        {showingGates
-          ? <>
+    <section className={`challenge-board is-arena${showingGates ? ' is-gates' : ''}${open ? ' is-lifted' : ''}`} ref={rootRef} aria-hidden={open ? undefined : true}>
+      {showingGates ? (
+        <div className="challenge-list is-gates">
+          <div className="challenge-gates">
             {GATES.map((card) => (
               <article
                 key={card.id}
@@ -370,26 +436,79 @@ export function ChallengeBoard({ open }: { open: boolean }) {
                 <h2 className="challenge-bit">Challenge someone</h2>
                 <p className="challenge-promo__lead challenge-bit">Put a creature in. They answer with theirs. The pool is the entry fees.</p>
                 <div className="challenge-promo__facts challenge-bit">
-                  <span><strong>10</strong><small>Entry</small></span>
-                  <span><strong>Open</strong><small>Your side</small></span>
-                  <span><strong>Open</strong><small>Their side</small></span>
+                  <span>
+                    <small>Entry</small>
+                    <strong>10</strong>
+                    <em>crystals</em>
+                  </span>
+                  <span>
+                    <small>Your side</small>
+                    <strong>Open</strong>
+                  </span>
+                  <span>
+                    <small>Their side</small>
+                    <strong>Open</strong>
+                  </span>
                 </div>
               </div>
             </article>
-          </>
-          : cards.map((card) => (
-            <article
-              key={card.id}
-              className="challenge-card"
-              onClick={fightFor(api, card.id)}
-              onPointerEnter={liftCard}
-              onPointerLeave={dropCard}
-            >
-              <span className="card-shade" aria-hidden="true" />
-              <CardFace card={card} />
-            </article>
-          ))}
-      </div>
+          </div>
+          <section className="challenge-record" aria-label="Record">
+            <header className="challenge-record__head">
+              <p className="challenge-kicker">Record</p>
+              <h2>Challenge marks</h2>
+            </header>
+            <ul>
+              {record.map((row) => (
+                <li key={row.code}>
+                  <b>{row.code}</b>
+                  <span>
+                    <strong>{row.name}</strong>
+                    <small>{row.line}</small>
+                  </span>
+                  <em>{row.meta}</em>
+                  <i className={row.on ? 'is-on' : ''}>{row.state}</i>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      ) : (
+        <div className="challenge-stage">
+          <button type="button" className="mode-pick__back" onClick={onBack}>
+            <ArrowLeft strokeWidth={1.75} aria-hidden="true" />
+            Back
+          </button>
+          <div className="challenge-tabs card-face" role="tablist" aria-label="Challenges">
+            {TABS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={picked === item.id}
+                className={picked === item.id ? 'is-on' : ''}
+                onClick={() => setPicked(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div className="challenge-list">
+            {cards.map((card) => (
+              <article
+                key={card.id}
+                className="challenge-card"
+                onClick={fightFor(api, card.id)}
+                onPointerEnter={liftCard}
+                onPointerLeave={dropCard}
+              >
+                <span className="card-shade" aria-hidden="true" />
+                <CardFace card={card} />
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
