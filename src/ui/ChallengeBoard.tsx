@@ -314,6 +314,7 @@ export function ChallengeBoard({ open, onBack }: { open: boolean; onBack: () => 
     const record = root.querySelector<HTMLElement>('.challenge-record')
     const recordBits = root.querySelectorAll<HTMLElement>('.challenge-record__head > *, .challenge-record li')
     const tabs = root.querySelector('.challenge-tabs')
+    const back = root.querySelector<HTMLElement>('.challenge-gates__back')
     const scroller = root.querySelector('.challenge-list')
     if (scroller instanceof HTMLElement) scroller.scrollTop = 0
     if (!open) {
@@ -326,6 +327,7 @@ export function ChallengeBoard({ open, onBack }: { open: boolean; onBack: () => 
       gsap.set(faces, { scale: 1, '--lift': 0, overwrite: true })
       gsap.set(shades, { scale: 1, opacity: 0, overwrite: true })
       gsap.to(recordBits, { y: 8, opacity: 0, duration: reduce ? 0 : 0.16, stagger: reduce ? 0 : 0.02, ease: 'power2.in' })
+      if (back) gsap.to(back, { y: -8, opacity: 0, duration: reduce ? 0 : 0.22, ease: 'power2.in' })
       if (record) gsap.to(record, { y: 24, scale: 1, opacity: 0, duration: reduce ? 0 : 0.32, ease: 'power3.in' })
       gsap.to(list, {
         y: 24,
@@ -342,6 +344,14 @@ export function ChallengeBoard({ open, onBack }: { open: boolean; onBack: () => 
     root.style.pointerEvents = 'auto'
     const tl = gsap.timeline({ defaults: { overwrite: 'auto' } })
     tl.set(root, { autoAlpha: 1 })
+    if (back) {
+      tl.fromTo(
+        back,
+        { y: -14, opacity: 0, filter: reduce ? 'none' : 'blur(10px)' },
+        { y: 0, opacity: 1, filter: 'blur(0px)', duration: reduce ? 0 : 0.5, ease: 'expo.out', immediateRender: true },
+        0,
+      )
+    }
     if (tabs && !tabsShown.current) {
       tabsShown.current = true
       tl.fromTo(
@@ -410,6 +420,11 @@ export function ChallengeBoard({ open, onBack }: { open: boolean; onBack: () => 
   return (
     <section className={`challenge-board is-arena${showingGates ? ' is-gates' : ''}${open ? ' is-lifted' : ''}`} ref={rootRef} aria-hidden={open ? undefined : true}>
       {showingGates ? (
+        <>
+        <button type="button" className="mode-pick__back challenge-gates__back" onClick={onBack}>
+          <ArrowLeft strokeWidth={1.75} aria-hidden="true" />
+          Back
+        </button>
         <div className="challenge-list is-gates">
           <div className="challenge-gates">
             {GATES.map((card) => (
@@ -473,6 +488,7 @@ export function ChallengeBoard({ open, onBack }: { open: boolean; onBack: () => 
             </ul>
           </section>
         </div>
+        </>
       ) : (
         <div className="challenge-stage">
           <button type="button" className="mode-pick__back" onClick={onBack}>

@@ -3361,6 +3361,11 @@ button, input { font: inherit; color: inherit; }
   width: min(1080px, calc(100vw - 64px));
 }
 
+.challenge-board.is-arena.is-gates > .challenge-gates__back {
+  align-self: flex-end;
+  margin-right: 16px;
+}
+
 .machine-page.is-board .challenge-board.is-lifted,
 .machine-page.is-challenges .challenge-board.is-lifted,
 .machine-page.is-field .challenge-board.is-lifted,
