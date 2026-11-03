@@ -41,18 +41,28 @@ export function AiCredit() {
   return (
     <>
       <div className="ai-credit">
-        <span className="ai-credit__lead">powered by</span>
-        <button type="button" className="ai-credit__brand" aria-label="Anthropic" onClick={() => setOpen('anthropic')}>
-          <img src="/brand/anthropic-wordmark.svg" alt="" />
-        </button>
-        <button type="button" className="ai-credit__model" onClick={() => setOpen('haiku')}>
-          <img src="/brand/claude-symbol.svg" alt="" />
-          <span>Haiku 5.5</span>
-        </button>
-        <button type="button" className="ai-credit__model" onClick={() => setOpen('sonnet')}>
-          <img src="/brand/claude-symbol.svg" alt="" />
-          <span>Sonnet 5.5</span>
-        </button>
+        <a className="ai-credit__lockup" href="/" aria-label="Buddy home">
+          <img className="ai-credit__logo" src="/b-logo%20white.svg" alt="" />
+          <i className="ai-credit__rule" aria-hidden="true" />
+          <p className="ai-credit__word">
+            <strong>Buddy</strong>
+            <span>Pet Engine</span>
+          </p>
+        </a>
+        <div className="ai-credit__by">
+          <span className="ai-credit__lead">Powered by</span>
+          <button type="button" className="ai-credit__brand" aria-label="Anthropic" onClick={() => setOpen('anthropic')}>
+            <img src="/brand/anthropic-wordmark.svg" alt="" />
+          </button>
+          <button type="button" className="ai-credit__model" onClick={() => setOpen('haiku')}>
+            <img src="/brand/claude-symbol.svg" alt="" />
+            <span>Haiku 5.5</span>
+          </button>
+          <button type="button" className="ai-credit__model" onClick={() => setOpen('sonnet')}>
+            <img src="/brand/claude-symbol.svg" alt="" />
+            <span>Sonnet 5.5</span>
+          </button>
+        </div>
       </div>
       {model && open
         ? createPortal(
