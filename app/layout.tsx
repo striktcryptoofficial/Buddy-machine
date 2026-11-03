@@ -1,16 +1,28 @@
 import type { Metadata } from "next";
 import { HatchWipe } from "@/components/home/hatch-wipe";
 
+const description =
+  "A cat with a life of its own. Hatch one from your wallet, keep it, and take it into the arena.";
+
 export const metadata: Metadata = {
   title: {
     default: "Buddy",
-    template: "%s",
+    template: "%s · Buddy",
   },
-  description:
-    "One Solana wallet. One cat. Procedural DNA, fixed rarity, crystals, and SOL arena.",
+  description,
+  applicationName: "Buddy",
   icons: {
-    icon: "/cdn/69d660abd07691d10eb7ed1f/69d660acd07691d10eb7f25c_favicon.png",
-    apple: "/cdn/69d660abd07691d10eb7ed1f/69d660acd07691d10eb7f25d_webclip2.png",
+    icon: [
+      { url: "/brand/favicon.png", type: "image/png", sizes: "64x64", media: "(prefers-color-scheme: light)" },
+      { url: "/brand/favicon-dark.png", type: "image/png", sizes: "64x64", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Buddy",
+    description,
+    siteName: "Buddy",
+    type: "website",
   },
 };
 

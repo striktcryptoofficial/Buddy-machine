@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Hatch } from "./hatch";
 
 export const metadata: Metadata = {
-  title: "Hatch",
-  description: "Hatch a cat of your own.",
+  description: "Hatch a Buddy, keep it on the machine, and take it into the arena.",
 };
 
 export default function ExplorePage() {

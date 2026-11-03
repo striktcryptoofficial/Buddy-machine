@@ -7,7 +7,7 @@ import type { PageContent } from "@/lib/page-content";
 const page = terms as PageContent;
 
 export const metadata: Metadata = {
-  title: page.title,
+  title: "Terms",
   description: page.description,
 };
 
